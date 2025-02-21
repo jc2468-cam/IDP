@@ -1,6 +1,6 @@
 from interface import *
 from calibrations import *
 
-led = Led(20)
+motor = Motor(1)
 
-blink_led(led)
+motor.run(0.5)
