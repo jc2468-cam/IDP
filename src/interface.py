@@ -28,6 +28,9 @@ class Tank:
 		return Tank(Motor(0, vel_scale), Motor(1, vel_scale), axel_length)
 	def drive(self, v_f, v_r=0.0):
 		self.run_raw(*self.get_motor_speeds(v_f, v_r))
+	def stop(self):
+		self.m1.off()
+		self.m2.off()
 	def get_motor_speeds(self, v_f, v_r=0.0):
 		diff_vel = v_r * axel_length
 		v1, v2 = v_f + diff_vel, v_f - diff_vel
@@ -59,6 +62,8 @@ class TrackedTank:
 		self.tick(time)
 		self.motion = [v_f, v_r]
 		self.inner.drive(v_f, v_r)
+	def stop(self):
+		self.inner.stop()
 	def tick(self, time):
 		motion_rad = self.motion[0] / self.motion[1]
 		radial = (self.motion[1] * time  * self.wheel_circ) % pi
@@ -70,3 +75,14 @@ class TrackedTank:
 		return self.pos
 	def last_pos(self):
 		return self.pos
+
+class Led:
+	def __init__(self, pin):
+		self.pin = Pin(pin, Pin.OUT)
+		self.pwm_pin = PWM(Pin(pin+1))
+	def brightness(self, b):
+		self.pwm_pin.duty_u16(int(65535*(1-b)))
+	def on(self):
+		self.pin.value(0)
+	def off(self):
+		self.pin.value(1)
