@@ -1,7 +1,5 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import serial
-from time import sleep
 
 
 board = serial.Serial("COM4", 115200, timeout=10)
