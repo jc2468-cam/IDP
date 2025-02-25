@@ -1,4 +1,5 @@
-from utime import sleep
+from utime import sleep, ticks_ms
+from machine import Pin
 
 def straigt_line(tank, t=10, v=1.0):
     tank.drive(v)
@@ -22,3 +23,33 @@ def blink_led(led, rate=1.0, t=10):
         sleep(0.5 / rate)
         led.off()
         sleep(0.5 / rate)
+
+def motor_tacho(motor, sensor_pin, steps=5, v_step=0.1, v_start=0.2, v_max=1):
+    global times, counter, counter_max, speed
+    
+    speed = v_start
+    motor.off()
+
+    def log_sensor(p):
+        global times, counter, counter_max, speed
+        times.append(ticks_ms())
+        counter += 1
+        if counter == counter_max:
+            counter = 0
+            print(times)
+            with open(f"out_{speed}", "w") as f:
+                f.write(str(times))
+            times = list()
+            if speed < v_max:
+                speed += v_step
+                motor.run(speed)
+            else:
+                motor.off()
+    
+    times = list()
+    counter = 0
+    counter_max = 5
+    sensor_pin.irq(log_sensor, Pin.IRQ_RISING)
+    
+    sleep(5)
+    motor.run(speed)
