@@ -1,4 +1,4 @@
-from machine import Pin, PWM
+from machine import Pin, PWM, Timer
 from math import cos, sin, pi
 
 
@@ -100,3 +100,9 @@ class Led:
         self.state = 0
     def toggle(self):
         self.brightness(1 - self.state)
+    def blink_ticker(self, frequency):
+        def flip_led(f):
+            self.toggle()
+
+        timer = Timer()
+        timer.init(freq=frequency, mode=Timer.PERIODIC, callback=flip_led)
