@@ -12,10 +12,6 @@ def follow():
             tank.forward()
         elif (left == 0 and centre == 0) and right == 0:
             tank.stop()
-        elif (left == 1 and centre == 1) and right == 1:
-            tank.stop()
-        elif (left == 0 and centre == 0) and right == 0:
-            tank.stop()
         elif (left == 1 and centre == 1) and right == 0:
             tank.turnleft()
         elif (left == 1 and centre == 0) and right == 0:
@@ -24,5 +20,10 @@ def follow():
             tank.turnright()
         elif (left == 0 and centre == 0) and right == 1:
             tank.turnright()
+        elif (left == 1 and centre == 1) and right == 1:
+            tank.turnleft()
+
+        if colour_detected:
+            break
 
     
