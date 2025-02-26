@@ -1,6 +1,6 @@
 from utime import sleep
 
-def straigt_line(tank, t=10, v=1.0):
+def straight_line(tank, t=10, v=1.0):
     tank.drive(v)
     sleep(t)
     tank.stop()
