@@ -1,7 +1,7 @@
 from utime import sleep, ticks_ms
 from machine import Pin
 
-def straigt_line(tank, t=10, v=1.0):
+def straight_line(tank, t=10, v=1.0):
     tank.drive(v)
     sleep(t)
     tank.stop()

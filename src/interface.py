@@ -46,6 +46,10 @@ class Tank:
     def run_raw(self, v1, v2):
         self.m1.run(v1)
         self.m2.run(v2)
+    def pickup():
+        #code for picking up the block
+        pass
+    
 
 class TrackedTank:
     def __init__(self, m1, m2, axel_length, wheel_diam):
