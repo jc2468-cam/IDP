@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import os
 
 
@@ -16,3 +17,9 @@ for f_name in file_names:
 
 print(cal_p)
 print(cal_s)
+
+fig, ax = plt.subplots()
+
+ax.plot(cal_p, cal_s)
+
+plt.show()
