@@ -21,5 +21,5 @@ tank.drive(0.5)
 dt = 0.1
 while True:
     sleep(dt)
-    print(tank.tick(dt))
+    print("pos:", tank.tick(dt))
 
