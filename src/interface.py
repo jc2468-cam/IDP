@@ -36,7 +36,7 @@ class Tank:
         self.m1.off()
         self.m2.off()
     def get_motor_speeds(self, v_f, v_r=0.0):
-        diff_vel = v_r * axel_length
+        diff_vel = v_r * self.axel_length
         v1, v2 = v_f + diff_vel, v_f - diff_vel
         limit = max(abs(v1), abs(v2))
         if limit > 1.0:
@@ -55,24 +55,29 @@ class TrackedTank:
         self.motion = [0, 0]
         self.wheel_circ = wheel_diam * 2 * pi
     def default(axel_length, wheel_diam, vel_scale=1.0):
-        self.inner = Tank.default(axel_length, vel_scale)
-        self.pos = [0,0,0,0]
-        self.motion = [0, 0]
-        self.wheel_diam = wheel_diam
+        return TrackedTank(Motor(0, vel_scale), Motor(1, vel_scale), axel_length, wheel_diam)
     def drive(self, v_f, *args):
-        if len(args) == 1:
+        if len(args) == 0:
+            v_r, t = 0, 0
+        elif len(args) == 1:
             v_r, t = 0, args[0]
         else:
             v_r, t = args[0], args[1]
-        self.tick(time)
+        self.tick(t)
         self.motion = [v_f, v_r]
         self.inner.drive(v_f, v_r)
     def stop(self):
         self.inner.stop()
     def tick(self, time):
-        motion_rad = self.motion[0] / self.motion[1]
-        radial = (self.motion[1] * time  * self.wheel_circ) % pi
-        dx, dy = motion_rad * cos(self.pos[2] + radial), motion_rad * sin(self.pos[2] + radial)
+        radial = (self.motion[1] * time * self.wheel_circ) % pi
+        if abs(self.motion[1]) < 1e-3:
+            dist = self.motion[0] * self.wheel_circ
+            theta = self.pos[2] + (0.5 * radial)
+            dx, dy = dist * cos(theta), dist * sin(theta)
+        else:
+            motion_rad = self.motion[0] / self.motion[1]
+            theta = self.pos[2] + radial
+            dx, dy = motion_rad * (sin(theta) - sin(self.pos[2])), motion_rad * (cos(self.pos[2]) - cos(theta))
         self.pos[0] += dx
         self.pos[1] += dy
         self.pos[2] += radial
@@ -103,3 +108,4 @@ class Led:
 
         timer = Timer()
         timer.init(freq=frequency, mode=Timer.PERIODIC, callback=flip_led)
+
