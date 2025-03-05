@@ -4,10 +4,10 @@ from utime import sleep
 def telemetry_out(get_telem_str):
 	def wrapper(fn):
 		def inner(*args):
-			global TELEMETRY_OUT, PHYSICAL_OUT
-			if TELEMETRY_OUT:
+			global INPUT_MODE
+			if INPUT_MODE == 1 || INPUT_MODE == 2:
 				print(get_telem_str(*args))
-			if PHYSICAL_OUT:
+			if INPUT_MODE == 0 || INPUT_MODE == 2:
 				fn(*args)
 		return inner
 	return wrapper
