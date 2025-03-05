@@ -23,7 +23,7 @@ if AWAIT_LINK:
 
 #print('rgb: {}'.format(tcs.read('rgb')))
 
-tank = TrackedTank.default(AXEL_LENGTH, 6.5)
+tank = TrackedTank.default(AXLE_LENGTH, 6.5)
 
 dt = 0.1
 
