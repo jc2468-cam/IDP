@@ -3,7 +3,7 @@ import pygame
 import serial
 
 
-board = serial.Serial("COM5", 115200, timeout=4)
+board = serial.Serial("COM4", 115200, timeout=4)
 
 
 env_points = [(0,0), (30,0), (30,100), (30,-100)]

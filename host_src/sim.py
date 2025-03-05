@@ -38,13 +38,13 @@ class RoboSim:
         self.motor_cal_m = MOTOR_CAL_M
         self.motor_cal_c = MOTOR_CAL_C
         self.motor_cal_t = MOTOR_CAL_T
-        self.axel_length = AXEL_LENGTH
+        self.axle_length = AXEL_LENGTH
 
         self.m0_scale = 1.02
         self.m1_scale = 1.0
 
         self.wheel_circ = self.wheel_diam * pi
-        self.axel_rad = 0.5 * AXEL_LENGTH
+        self.axle_rad = 0.5 * AXEL_LENGTH
     def send_params(self, board):
         board.write(b"Control::load_params({}, {}, {}, {})".format(WHEEL_DIAM, AXEL_LENGTH, MOTOR_CAL_M, MOTOR_CAL_C, MOTOR_CAL_T))
     def fetch_params(self, board):
@@ -60,7 +60,7 @@ class RoboSim:
             self.motor_cal_t = values[3]
 
             self.wheel_circ = self.wheel_diam * pi
-            self.axel_factor = 1.0
+            self.axle_factor = 1.0
         else:
             print("Got unexpected reply:", reply)
             raise ValueError
@@ -99,7 +99,7 @@ class RoboSim:
     def recalculate_motion(self):
         cal_v0 = 0.0 if self.v0 < self.motor_cal_t else self.motor_cal_m * self.v0 + self.motor_cal_c
         cal_v1 = 0.0 if self.v1 < self.motor_cal_t else self.motor_cal_m * self.v1 + self.motor_cal_c
-        cal_v_f, cal_v_r = 0.5 * (cal_v0 + cal_v1), (cal_v0 - cal_v1) / self.axel_rad
+        cal_v_f, cal_v_r = 0.5 * (cal_v0 + cal_v1), 0.5 * (cal_v0 - cal_v1) / self.axle_rad
         self.motion = [cal_v_f, cal_v_r]
     def set_m0_v(self, velocity):
         self.v0 = velocity * self.m0_scale
