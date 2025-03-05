@@ -1,10 +1,11 @@
 from interface.interface import *
+from config import *
 from calibrations import *
 from utime import sleep, ticks_ms
 
 from machine import Pin, PWM, Timer, I2C
 
-if SIM_OUT or SIM_IN:
+if AWAIT_LINK:
     while input().strip() != "Control::start":
         pass
     param_command = input().strip()
@@ -38,3 +39,4 @@ tank.drive(0.7)
 for _ in range(20):
     sleep(dt)
     print("pos:", tank.tick(dt))
+tank.stop()

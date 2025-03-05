@@ -1,3 +1,5 @@
+from config import *
+
 SIM_OUT = True
 SIM_IN = False
 
@@ -11,14 +13,6 @@ if SIM_IN:
 else:
     from interface.base_input import *
 from math import cos, sin, pi
-
-
-WHEEL_DIAM = 6.5
-AXEL_LENGTH = 20.0
-
-MOTOR_CAL_M = 1.4103222508222688
-MOTOR_CAL_C = -0.0991676638734817
-MOTOR_CAL_T = 0.3
 
 
 class Tank:
@@ -65,7 +59,7 @@ class TrackedTank:
         v0, v1 = self.inner.get_motor_speeds(v_f, v_r)
         cal_v0 = 0.0 if v0 < MOTOR_CAL_T else MOTOR_CAL_M * v0 + MOTOR_CAL_C
         cal_v1 = 0.0 if v1 < MOTOR_CAL_T else MOTOR_CAL_M * v1 + MOTOR_CAL_C
-        cal_v_f, cal_v_r = 0.5 * (cal_v0 + cal_v1), (cal_v0 - cal_v1) / self.inner.axel_rad
+        cal_v_f, cal_v_r = 0.5 * (cal_v0 + cal_v1), 0.5 * (cal_v0 - cal_v1) / self.inner.axel_rad
         self.motion = [cal_v_f, cal_v_r]
         self.inner.drive(v_f, v_r)
     def stop(self):
