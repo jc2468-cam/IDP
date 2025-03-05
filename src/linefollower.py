@@ -44,7 +44,7 @@ def linefollower():
                                 motor.r = 1
                             break
 
-                        if sll == 1 and sl == 1:
+                        if srr == 1 and sr == 1:
                             #90 degree right turn
                             while srr != 0 and sll != 0:
                                 motor.r = -1
