@@ -6,19 +6,19 @@ def linefollower():
     # black = 0, white = 1
 
     while True:
-        sll = sensor.ll
-        sl = sensor.l
-        sr = sensor.r
-        srr = sensor.rr
+        sll = sensor.ll #leftmost sensor
+        sl = sensor.l #centreleft sensor
+        sr = sensor.r #centreright sensor
+        srr = sensor.rr #rightmost sensor
 
         while True:
             if srr == 0 and sll == 0:
                 if sl == 0 and sr == 0:
-                    motor.r = 1
-                    motor.l = 1
+                    motor.r = 1 #right motor
+                    motor.l = 1 #left motor
                     break
             if sr == 1:
-                motor.r = 0.5
+                motor.r = 0.5 #half-power/half-speed
                 motor.l = 1
                 break
             if sl == 1:
@@ -40,7 +40,7 @@ def linefollower():
                         if sll == 1 and sl == 1:
                             #90 degree left turn
                             while srr != 0 and sll != 0:
-                                motor.l = -1
+                                motor.l = -1 #rotate backwards
                                 motor.r = 1
                             break
 
