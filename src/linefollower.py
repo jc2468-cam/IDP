@@ -1,29 +1,54 @@
 #1 left, 1 right, 1 middle sensor. 
+#1 left, 1 right, 1 middle sensor. 
 
-def follow():
+def linefollower():
+    
+    # black = 0, white = 1
+
     while True:
-        tank = Sensor()
-        left = tank.readleft()
-        centre = tank.readcentre()
-        right = tank.readright()    
-        #0 is white, 1 is black
+        sll = sensor.ll #leftmost sensor
+        sl = sensor.l #centreleft sensor
+        sr = sensor.r #centreright sensor
+        srr = sensor.rr #rightmost sensor
 
-        if (left == 0 and centre == 1) and right == 0:
-            tank.forward()
-        elif (left == 0 and centre == 0) and right == 0:
-            tank.stop()
-        elif (left == 1 and centre == 1) and right == 0:
-            tank.turnleft()
-        elif (left == 1 and centre == 0) and right == 0:
-            tank.turnleft()
-        elif (left == 0 and centre == 1) and right == 1:
-            tank.turnright()
-        elif (left == 0 and centre == 0) and right == 1:
-            tank.turnright()
-        elif (left == 1 and centre == 1) and right == 1:
-            tank.turnleft()
+        while True:
+            if srr == 0 and sll == 0:
+                if sl == 0 and sr == 0:
+                    motor.r = 1 #right motor
+                    motor.l = 1 #left motor
+                    break
+            if sr == 1:
+                motor.r = 0.5 #half-power/half-speed
+                motor.l = 1
+                break
+            if sl == 1:
+                motor.l = 0.5
+                motor.r = 1
 
-        if colour_detected:
-            break
+            if sll == 1 or srr == 1:
+                
+                while True:
+                    sll = sensor.ll
+                    sl = sensor.l
+                    sr = sensor.r
+                    srr = sensor.rr
+
+                    if sll == 0 and srr == 0:
+                        break
+
+                    while True:
+                        if sll == 1 and sl == 1:
+                            #90 degree left turn
+                            while srr != 0 and sll != 0:
+                                motor.l = -1 #rotate backwards
+                                motor.r = 1
+                            break
+
+                        if srr == 1 and sr == 1:
+                            #90 degree right turn
+                            while srr != 0 and sll != 0:
+                                motor.r = -1
+                                motor.l = 1
+                            break
 
     
