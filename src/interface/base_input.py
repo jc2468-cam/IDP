@@ -58,7 +58,7 @@ def start_input_sim_monitor():
                     old_v = sim_input_pins[p]
                     sim_input_pins[p] = v
                     sim_input_pins[p][1] = False
-                    if old_v != v && sim_pin_interupt_callbacks[p][1] == v:
+                    if old_v != v and sim_pin_interupt_callbacks[p][1] == v:
                         sim_pin_interupt_callbacks[p][0](p)
                 elif "#" in command[9:]:
                     identifier = command[9:].split("#")
