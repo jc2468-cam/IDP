@@ -54,7 +54,7 @@ def start_input_sim_monitor():
             command = input().strip()
             if command[:9] == "Control::":
                 if command[9:16] == "set_pin":
-                    p, v = *[int(s) for s in command[1:-1].split(",")]
+                    p, v = [int(s) for s in command[1:-1].split(",")]
                     old_v = sim_input_pins[p]
                     sim_input_pins[p] = v
                     sim_input_pins[p][1] = False
