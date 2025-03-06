@@ -4,11 +4,11 @@ SIM_OUT = True
 SIM_IN = False
 
 if SIM_OUT:
-    from interface.base_output_sim import *
+    from interface.base_output import *
 else:
     from interface.base_output import *
 if SIM_IN:
-    from interface.base_input_sim import *
+    from interface.base_input import *
     start_input_sim_monitor()
 else:
     from interface.base_input import *

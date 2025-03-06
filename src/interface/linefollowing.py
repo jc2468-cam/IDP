@@ -37,6 +37,9 @@ class LineSensor:
             return result
         
         def integrate(self, time_interval):
+            
+            # corner detection
+            
             self.integral += control_function(self) * time_interval
             self.tank.drive(v_f, control_function(self))
                  
