@@ -2,6 +2,7 @@ from interface.interface import *
 from config import *
 from calibrations import *
 from utime import sleep, ticks_ms
+from interface.linefollowing import LineSensor
 
 from machine import Pin, PWM, Timer, I2C
 
@@ -14,7 +15,6 @@ if AWAIT_LINK:
     else:
         print("Got param command", param_command)
 
-
 #i2c_bus = I2C(0, sda=Pin(16), scl=Pin(17))
 #print(i2c_bus.scan())
 #tcs = TCS34725(i2c_bus)
@@ -24,19 +24,21 @@ if AWAIT_LINK:
 #print('rgb: {}'.format(tcs.read('rgb')))
 
 tank = TrackedTank.default(AXLE_LENGTH, 6.5)
+line_sesnors = LineSensor(tank, 1, 2, 3, 4)
+line_sesnors.line_follow(0.8, 0.1)
 
 dt = 0.1
 
-tank.drive(0.7)
-for _ in range(20):
-    sleep(dt)
-    print("pos:", tank.tick(dt))
-tank.drive(0.7, 0.02, 0.0)
-for _ in range(20):
-    sleep(dt)
-    print("pos:", tank.tick(dt))
-tank.drive(0.7)
-for _ in range(20):
-    sleep(dt)
-    print("pos:", tank.tick(dt))
-tank.stop()
+# tank.drive(0.7)
+# for _ in range(20):
+#     sleep(dt)
+#     print("pos:", tank.tick(dt))
+# tank.drive(0.7, 0.02, 0.0)
+# for _ in range(20):
+#     sleep(dt)
+#     print("pos:", tank.tick(dt))
+# tank.drive(0.7)
+# for _ in range(20):
+#     sleep(dt)
+#     print("pos:", tank.tick(dt))
+# tank.stop()
