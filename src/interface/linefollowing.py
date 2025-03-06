@@ -1,6 +1,6 @@
 from .base_input import DigitalInput
 from machine import Timer
-from .interface import Tank
+from .interface import Tank, TrackedTank
 
 class LineSensor:
     
@@ -14,13 +14,13 @@ class LineSensor:
         
         # tank must be a tank object. raise objection if not
         self.tank = tank
-        if type(tank) != Tank:
+        if type(tank) != TrackedTank and type(tank) != Tank:
             raise TypeError("tank parameter must be a tank object")
             
         self.integral = 0
         self.x_values = []
     
-    def line_follow(self, time_interval, v_f):
+    def line_follow(self, v_f, time_interval):
         """uses the line sensors and drives the tank forward at speed v_f"""
         
         def control_function(self):
