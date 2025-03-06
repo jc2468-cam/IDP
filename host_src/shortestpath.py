@@ -65,7 +65,7 @@ if __name__ == '__main__':
     path = []
  
     print("Shortest path: ", end = "")
-    path = constructPath(2,48)
+    path = constructPath(2,48) #nodes to travel between
     printPath(path)
  
  
