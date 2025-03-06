@@ -2,7 +2,7 @@ global OUTPUT_MODE, INPUT_MODE, AWAIT_LINK
 # 0: physical only    1: telemetry only    2: both
 OUTPUT_MODE = 2
 # 0: physical only    1: telemetry only    2: both
-INPUT_MODE = 2
+INPUT_MODE = 0
 # wait for host to indicate link before starting
 AWAIT_LINK = True
 

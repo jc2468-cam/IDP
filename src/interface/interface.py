@@ -1,17 +1,8 @@
 from config import *
 
-SIM_OUT = True
-SIM_IN = False
+from interface.base_output import *
+from interface.base_input import *
 
-if SIM_OUT:
-    from interface.base_output import *
-else:
-    from interface.base_output import *
-if SIM_IN:
-    from interface.base_input import *
-    start_input_sim_monitor()
-else:
-    from interface.base_input import *
 from math import cos, sin, pi
 
 
@@ -81,3 +72,4 @@ class TrackedTank:
         return self.pos
     def last_pos(self):
         return self.pos
+
