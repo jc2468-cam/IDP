@@ -14,7 +14,6 @@ if AWAIT_LINK:
     else:
         print("Got param command", param_command)
 
-
 #i2c_bus = I2C(0, sda=Pin(16), scl=Pin(17))
 #print(i2c_bus.scan())
 #tcs = TCS34725(i2c_bus)
