@@ -13,7 +13,7 @@ class LineSensor:
     
     def line_follow(self, time_interval):
         def control_function(self):
-            result = 0
+            result = self.sensor1 * 2 + self.sensor2 - self.sesnor3 - self.sesnor4 * 2
             return result
         
         timer = Timer()
