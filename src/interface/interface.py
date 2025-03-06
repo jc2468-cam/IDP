@@ -16,19 +16,19 @@ from math import cos, sin, pi
 
 
 class Tank:
-    def __init__(self, m0, m1, axel_length):
+    def __init__(self, m0, m1, axle_length):
         self.m0 = m0
         self.m1 = m1
-        self.axel_rad = axel_length * 0.5
-    def default(axel_length, vel_scale=1.0):
-        return Tank(Motor(0, vel_scale), Motor(1, vel_scale), axel_length)
+        self.axle_rad = axle_length * 0.5
+    def default(axle_length, vel_scale=1.0):
+        return Tank(Motor(0, vel_scale), Motor(1, vel_scale), axle_length)
     def drive(self, v_f, v_r=0.0):
         self.run_raw(*self.get_motor_speeds(v_f, v_r))
     def stop(self):
         self.m0.off()
         self.m1.off()
     def get_motor_speeds(self, v_f, v_r=0.0):
-        diff_vel = v_r * self.axel_rad
+        diff_vel = v_r * self.axle_rad
         v0, v1 = v_f + diff_vel, v_f - diff_vel
         limit = max(abs(v0), abs(v1))
         if limit > 1.0:
@@ -41,13 +41,13 @@ class Tank:
     
 
 class TrackedTank:
-    def __init__(self, m0, m1, axel_length, wheel_diam):
-        self.inner = Tank(m0, m1, axel_length)
+    def __init__(self, m0, m1, axle_length, wheel_diam):
+        self.inner = Tank(m0, m1, axle_length)
         self.pos = [0,0,0,0]
         self.motion = [0, 0]
         self.wheel_circ = wheel_diam * pi
-    def default(axel_length, wheel_diam, vel_scale=1.0):
-        return TrackedTank(Motor(0, vel_scale), Motor(1, vel_scale), axel_length, wheel_diam)
+    def default(axle_length, wheel_diam, vel_scale=1.0):
+        return TrackedTank(Motor(0, vel_scale), Motor(1, vel_scale), axle_length, wheel_diam)
     def drive(self, v_f, *args):
         if len(args) == 0:
             v_r, t = 0, 0
@@ -59,7 +59,7 @@ class TrackedTank:
         v0, v1 = self.inner.get_motor_speeds(v_f, v_r)
         cal_v0 = 0.0 if v0 < MOTOR_CAL_T else MOTOR_CAL_M * v0 + MOTOR_CAL_C
         cal_v1 = 0.0 if v1 < MOTOR_CAL_T else MOTOR_CAL_M * v1 + MOTOR_CAL_C
-        cal_v_f, cal_v_r = 0.5 * (cal_v0 + cal_v1), 0.5 * (cal_v0 - cal_v1) / self.inner.axel_rad
+        cal_v_f, cal_v_r = 0.5 * (cal_v0 + cal_v1), 0.5 * (cal_v0 - cal_v1) / self.inner.axle_rad
         self.motion = [cal_v_f, cal_v_r]
         self.inner.drive(v_f, v_r)
     def stop(self):

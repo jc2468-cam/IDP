@@ -6,9 +6,9 @@ INPUT_MODE = 2
 # wait for host to indicate link before starting
 AWAIT_LINK = True
 
-global WHEEL_DIAM, AXEL_LENGTH
+global WHEEL_DIAM, AXLE_LENGTH
 WHEEL_DIAM = 6.5
-AXEL_LENGTH = 20.0
+AXLE_LENGTH = 20.0
 
 global MOTOR_CAL_M, MOTOR_CAL_C, MOTOR_CAL_T
 MOTOR_CAL_M = 1.4103222508222688
