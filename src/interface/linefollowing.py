@@ -9,7 +9,7 @@ class LineSensor:
         self.sensor2 = DigitalInput(sensor_2_pin)
         self.sensor3 = DigitalInput(sensor_3_pin)
         self.sensor4 = DigitalInput(sensor_4_pin)
-        self.integration = 0
+        self.integral = 0
     
     def line_follow(self, time_interval):
         def control_function(self):
