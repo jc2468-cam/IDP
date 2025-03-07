@@ -33,7 +33,7 @@ def getweightsmatrix(inputfile='src/weights.csv'):
     weights = [[int(element) for element in row] for row in weights]
     return weights
 
-x= zerotoinfinity(addturnweights(getweightsmatrix('src/testweights.csv')))
+x= zerotoinfinity(addturnweights(getweightsmatrix('src/testweights.csv'))) #change testweights to weights
 
 def floydWarshall(graph,V):
     for k in range(V-1):
