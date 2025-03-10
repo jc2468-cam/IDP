@@ -40,6 +40,8 @@ class TrackedTank:
     def default(axle_length, wheel_diam, vel_scale=1.0):
         return TrackedTank(Motor(0, vel_scale), Motor(1, vel_scale), axle_length, wheel_diam)
     def drive(self, v_f, *args):
+        """makes the tank drive at a forward speed v_f and in an arc at speed v_r
+        If 2 arguments passed, take them to be v_r and t."""
         if len(args) == 0:
             v_r, t = 0, 0
         elif len(args) == 1:
@@ -71,5 +73,7 @@ class TrackedTank:
         self.pos[3] += time
         return self.pos
     def last_pos(self):
+        """returns the last position of the tank in the form
+        (x, y, radial, time)"""
         return self.pos
 
