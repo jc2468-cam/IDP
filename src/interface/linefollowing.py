@@ -1,6 +1,7 @@
 from .base_input import DigitalInput
 from machine import Timer
 from .interface import Tank, TrackedTank
+from numpy import pi
 
 class LineSensor:
     
@@ -50,34 +51,101 @@ class LineSensor:
             return result
 
         # create a list of bend positions and see which one you're closest to.
-        # format: (x, y, bend_type)
-        self.bend_positions = ((0, 0, 2))
-        self.bend_type = 0
-        # 0: no bend
-        # 1: left corner
-        # 2: right corner
-        # 3: left T
-        # 4: right T
-        # 5: flat T
+        # format: (x, y, approach direction)
+        # approach directions: compass directions
+        self.bend_positions = ((0, 0), # 0
+                               (0, 31),
+                               (0, 31),
+                               (0, 31),
+                               (0, 31),
+                               (104, 31), # 5
+                               (104, 31),
+                               (104, 31),
+                               (104, 31),
+                               (-104, 31),
+                               (-104, 31), # 10
+                               (-104. 31),
+                               (-104, 31),
+                               (-104, 117),
+                               (-104, 117),
+                               (-104, 117), # 15
+                               (-104, 117),
+                               (-104, 193),
+                               (-104, 193),
+                               (-104, 193),
+                               (-104, 193), # 20
+                               (-2, 193),
+                               (-2, 193),
+                               (-2, 193),
+                               (-2, 193),
+                               (40, 193), # 25
+                               (40, 193),
+                               (40, 193),
+                               (40, 193),
+                               (104, 115),
+                               (104, 115), # 30
+                               (104, 115),
+                               (104, 115),
+                               (0, 115),
+                               (0, 115),
+                               (0, 115), # 35
+                               (0, 115),
+                               (32, 31),
+                               (32, 31),
+                               (32, 31),
+                               (32, 31), # 40
+                               (34, 115),
+                               (34, 115),
+                               (34, 115),
+                               (34, 115),
+                               (0, 152), # 45
+                               (0, 152),
+                               (0, 152),
+                               (0, 152),
+                               (104, 160),
+                               (104, 160), # 50
+                               (104, 160),
+                               (104, 160))
+        
+        def compass_pointify(points):
+            result = []
+            n = 2
+            for point in points:
+                result.append(point[0], point[1], (pi/2)*(n%4))
+                n += 1
+            return tuple(result)
+        
+        self.bend_positions = compass_pointify(self.bend_positions)
+        print(self.bend_positions)
         
         def integrate(p=None):
             # check for bend
             if (self.sensor1 == self.sensor2 == 1 or self.sensor3 == self.sensor4 == 1) and self.bend_type == 0:
+                
+                # find rotation
+                rotation = (self.pos[3] * 18 / pi)%36
+                if rotation < 4.5:
+                    rotation = 0
+                if 4.5 < rotation < 13.5:
+                    rotation = 27
+                if 13.5 < rotation:
+                    rotation = 18   
+                if -4.5 < rotation:
+                    rotation = 0
+                if -13.5 < rotation < -4.5:
+                    rotation = 9
+                if -13.5 > rotation:
+                    rotation = 18   
+                print(rotation)            
                 self.pos = self.tank.last_pos()
                 bend_x = self.bend_positions[0] - self.pos[0]
                 bend_y = self.bend_positions[1] - self.pos[1]
                 bend_divergence = bend_x + bend_y
-                nearest_bend = self.bend_positions[bend_divergence.index(min(bend_divergence))]
-                self.bend_type = nearest_bend[2]
-            
-            if self.bend_type != 0:           
-                # execute bend
-                if self.bend_type == 1:
-                    print("left bend")
-                    self.tank.drive(0, 0.2)
-                if self.bend_type == 2:
-                    print("right bend")
-                    self.tank.drive(0, -0.2)
+                bend_position = bend_divergence.index(min(bend_divergence))
+                bend = (bend_position[0], bend_position[1], rotation)
+                node_number = self.bend_positions.index(bend)
+                print(node_number)
+                # do Froyd on node number
             
             # else just line follow
             else:
