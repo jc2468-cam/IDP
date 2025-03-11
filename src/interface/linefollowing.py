@@ -19,6 +19,8 @@ class LineSensor:
             
         self.integral = 0
         self.x_values = [0]
+        self.pos = (0, 0, 0)
+        self.timer3 = Timer()
         
     """def tick(self):
         print("sensor 1: ", self.sensor1.value())
@@ -37,11 +39,11 @@ class LineSensor:
         
         def control_function(self):
             # weighting for the sensors
-            x = self.sensor1.value() * 2 + self.sensor2.value() - self.sensor3.value() - self.sensor4.value() * 2
+            x = self.sensor1.value() * 4 + self.sensor2.value() - self.sensor3.value() - self.sensor4.value() * 4
             self.x_values.append(x)
             
             # PID controller
-            kp = 0.02
+            kp = -0.017
             kd = 0
             ki = 0
             x_diff = self.x_values[-1] - self.x_values[-2]           
@@ -80,7 +82,7 @@ class LineSensor:
                                (104, 193), # 25
                                (104, 193),
                                (104, 193),
-                               (104, 193)
+                               (104, 193),
                                (104, 115),
                                (104, 115), # 30
                                (104, 115),
@@ -104,13 +106,13 @@ class LineSensor:
                                (42, 193),
                                (42, 193), # 50
                                (42, 193),
-                               (42, 193),)
+                               (42, 193))
         
         def compass_pointify(points):
             result = []
             n = 2
             for point in points:
-                result.append((point[1], point[0] (3.14/2)*(n%4)))
+                result.append((point[1], point[0], (3.14/2)*(n%4)))
                 n += 1
             return tuple(result)
         
@@ -123,13 +125,15 @@ class LineSensor:
             
             def unbend(p=None):
                 self.bending = False
+                self.timer3.deinit()
             
             # check for bend
-            if self.bend_initiate == True:
-                if (self.sensor1.value() == 1 and self.sensor2.value() == 1) or (self.sensor3.value() == 1 and self.sensor4.value() == 1):
+            if (self.sensor1.value() == 1 and self.sensor2.value() == 1) or (self.sensor3.value() == 1 and self.sensor4.value() == 1):
+                print("bendify")
+                if self.bending == False:
                     
                     # find rotation
-                    rotation = (self.pos[3] * 18 / 3.14)%36
+                    rotation = (self.pos[2] * 18 / 3.14)%36
                     if rotation < 4.5:
                         rotation = 0
                     if 4.5 < rotation and rotation < 13.5:
@@ -142,11 +146,12 @@ class LineSensor:
                         rotation = 9
                     if -13.5 > rotation:
                         rotation = 18   
-                    print("rotation = ", rotation)            
+                    print("rotation = ", rotation)
+                    print("position = ", self.pos)
+                    bend_divergence = []
                     self.pos = self.tank.last_pos()
-                    bend_x = self.bend_positions[1] - self.pos[1]
-                    bend_y = self.bend_positions[0] - self.pos[0]
-                    bend_divergence = bend_x + bend_y
+                    for node in self.bend_positions:
+                        bend_divergence.append(abs(node[1] - self.pos[1]) + abs(node[0] - self.pos[0]))
                     node_number = bend_divergence.index(min(bend_divergence))
                     bend_shell = self.bend_positions[node_number]
                     bend = (bend_shell[0], bend_shell[1], rotation)
@@ -155,7 +160,7 @@ class LineSensor:
                     print("node number = ", node_number)
                     # do Floyd on node number
                     # next node will only be in a cardinal direction from current
-                    next_node = 2
+                    next_node = 4
                     next_rotation = self.bend_positions[next_node][2]
                     # if next_node[0] == bend[0]:
                     #     if next_node[1] > bend[1]:
@@ -174,19 +179,22 @@ class LineSensor:
                         
                     rotation_needed = rotation - next_rotation  
                     v_r_in = 0.2
-                    rotation_time = rotation_needed / v_r_in                
+                    rotation_time = rotation_needed / v_r_in
                     self.tank.drive(0, v_r = v_r_in, t = rotation_time)
                     self.bend_initiate = False
-                    timer3 = Timer()
-                    timer3.init(freq=(1/rotation_time), mode=Timer.ONESHOT, callback=unbend)               
+                    self.bending = True
+                    if rotation_time == 0:
+                        rotation_time = 1
+                    self.timer3.init(freq=(1/rotation_time), mode=Timer.ONESHOT, callback=unbend) 
             
             # else just line follow
             if self.bending == False:
                 #print("integrating")
                 self.integral += control_function(self) * time_interval
                 self.tank.drive(v_f, control_function(self))
+                #print("control function = ", control_function(self))
         
         timer = Timer()
         timer.init(freq=(1/time_interval), mode=Timer.PERIODIC, callback=integrate)  
-        timer2 = Timer()
-        timer2.init(freq=(1/time_interval), mode=Timer.PERIODIC, callback=tick)
+        #timer2 = Timer()
+        #timer2.init(freq=(1/time_interval), mode=Timer.PERIODIC, callback=tick)

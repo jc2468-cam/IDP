@@ -23,10 +23,10 @@ if AWAIT_LINK:
 
 #print('rgb: {}'.format(tcs.read('rgb')))
 
-dt = 0.5
+dt = 0.3
 tank = TrackedTank.default(AXLE_LENGTH, 6.5)
 line_sesnors = LineSensor(tank, 9, 10, 11, 12)
-line_sesnors.line_follow(0.8, dt)
+line_sesnors.line_follow(0.45, dt)
 # a comment
 
 # tank.drive(0.7)
