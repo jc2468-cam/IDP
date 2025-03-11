@@ -1,5 +1,7 @@
 ON_PICO = True
 
+from config import *
+
 from interface.col_sense import *
 from machine import Pin
 
