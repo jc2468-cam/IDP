@@ -8,7 +8,9 @@ from interface.linefollowing import LineSensor
 from utime import sleep, ticks_ms
 from machine import Pin, PWM, Timer, I2C
 
+
 if AWAIT_LINK:
+    print("AWAITING LINK")
     while input().strip() != "Control::start":
         pass
     param_command = input().strip()
@@ -16,6 +18,9 @@ if AWAIT_LINK:
         print(f"Control::return_params({WHEEL_DIAM}, {MOTOR_CAL_M}, {MOTOR_CAL_C}, {MOTOR_CAL_T})")
     else:
         print("Got param command", param_command)
+
+if INPUT_MODE == 1 or INPUT_MODE == 2:
+    start_input_sim_monitor()
 
 #i2c_bus = I2C(0, sda=Pin(16), scl=Pin(17))
 #print(i2c_bus.scan())
@@ -25,32 +30,36 @@ if AWAIT_LINK:
 
 #print('rgb: {}'.format(tcs.read('rgb')))
 
-# dt = 0.3
-# tank = TrackedTank.default(AXLE_LENGTH, 6.5)
-# line_sensors = LineSensor(tank, 9, 10, 11, 12)
-# line_sensors.line_follow(0.45, dt)
+dt = 0.1
+tank = TrackedTank.default(AXLE_LENGTH, 6.5)
+line_sensors = LineSensor(tank, 9, 10, 11, 12)
+line_sensors.line_follow(0.45, dt)
 
-m0 = Motor(0)
-m0.run(-1)
+pos = 0
+enabled = True
 
-s1 = Servo(0)
-for _ in range(3):
-    s1.set_position(0.7)
-    sleep(3)
-    s1.set_position(0.0)
-    sleep(3)
-m0.off()
+turns = [1, -1, 0, -1]
 
-# tank.drive(0.7)
-# for _ in range(20):
-#     sleep(dt)
-#     print("pos:", tank.tick(dt))
-# tank.drive(0.7, 0.02, 0.0)
-# for _ in range(20):
-#     sleep(dt)
-#     print("pos:", tank.tick(dt))
-# tank.drive(0.7)
-# for _ in range(20):
-#     sleep(dt)
-#     print("pos:", tank.tick(dt))
-# tank.stop()
+def next_junction():
+    global enabled
+    if enabled:
+        enabled = False
+        sleep(0.2)
+
+        global linefollowing, pos, turns
+        linefollowing.stop_following()
+
+        linefollowing.tank.spin(turns[pos])
+        pos += 1
+
+        def reactivate(t):
+            global enabled, linefollowing
+            enabled = True
+
+            linefollowing.line_follow(0.45, dt)
+
+        timer = Timer()
+        timer.init(mode=Timer.ONE_SHOT, period=3000, callback=reactivate)
+
+line_sensors.sensor1.bind_interupt(next_junction, 1)
+line_sensors.sensor4.bind_interupt(next_junction, 1)

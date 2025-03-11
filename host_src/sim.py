@@ -65,13 +65,13 @@ class RoboSim:
             print("Got unexpected reply:", reply)
             raise ValueError
     def predict_pos(self, time):
-        radial = (self.motion[1] * time * self.wheel_circ) % pi
-        if abs(self.motion[1]) < 1e-3:
-            dist = self.motion[0] * self.wheel_circ * time
+        radial = (self.motion_s[1] * time * self.wheel_circ) % pi
+        if abs(self.motion_s[1]) < 1e-3:
+            dist = self.motion_s[0] * self.wheel_circ * time
             theta = self.pos_s[2] + (0.5 * radial)
             dx, dy = dist * cos(theta), dist * sin(theta)
         else:
-            motion_rad = self.motion[0] / self.motion[1]
+            motion_rad = self.motion_s[0] / self.motion_s[1]
             theta = self.pos_s[2] + radial
             dx, dy = motion_rad * (sin(theta) - sin(self.pos_s[2])), motion_rad * (cos(self.pos_s[2]) - cos(theta))
         self.pos_s[0] += dx
@@ -100,7 +100,7 @@ class RoboSim:
         cal_v0 = 0.0 if self.v0 < self.motor_cal_t else self.motor_cal_m * self.v0 + self.motor_cal_c
         cal_v1 = 0.0 if self.v1 < self.motor_cal_t else self.motor_cal_m * self.v1 + self.motor_cal_c
         cal_v_f, cal_v_r = 0.5 * (cal_v0 + cal_v1), 0.5 * (cal_v0 - cal_v1) / self.axle_rad
-        self.motion = [cal_v_f, cal_v_r]
+        self.motion_s = [cal_v_f, cal_v_r]
     def set_m0_v(self, velocity):
         self.v0 = velocity * self.m0_scale
         self.recalculate_motion()

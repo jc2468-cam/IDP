@@ -28,6 +28,7 @@ pygame.display.set_caption("Track Bot")
 
 bot = RoboSim()
 
+discard(board)
 board.write(b"Control::start\r\n")
 discard(board)
 bot.fetch_params(board)
@@ -52,7 +53,7 @@ for l in board:
         redraw = True
     else:
         print("MSG:", l)
-  
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             exit = True
