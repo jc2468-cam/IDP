@@ -42,7 +42,8 @@ class TrackedTank:
     def drive(self, v_f, v_r=0, t=0):
         """makes the tank drive at a forward speed v_f and in an arc at speed v_r
         If 2 arguments passed, take them to be v_r and t."""
-        self.tick(t)
+        if t != 0:
+            self.tick(t)
         v0, v1 = self.inner.get_motor_speeds(v_f, v_r)
         cal_v0 = 0.0 if v0 < MOTOR_CAL_T else MOTOR_CAL_M * v0 + MOTOR_CAL_C
         cal_v1 = 0.0 if v1 < MOTOR_CAL_T else MOTOR_CAL_M * v1 + MOTOR_CAL_C
