@@ -121,6 +121,9 @@ class LineSensor:
         
         def integrate(p=None):
             
+            def unbend(p=None):
+                self.bending = False
+            
             # check for bend
             if self.bend_initiate == True:
                 if (self.sensor1.value() == 1 and self.sensor2.value() == 1) or (self.sensor3.value() == 1 and self.sensor4.value() == 1):
@@ -173,7 +176,9 @@ class LineSensor:
                     v_r_in = 0.2
                     rotation_time = rotation_needed / v_r_in                
                     self.tank.drive(0, v_r = v_r_in, t = rotation_time)
-                    self.bend_initiate = False               
+                    self.bend_initiate = False
+                    timer3 = Timer()
+                    timer3.init(freq=(1/rotation_time), mode=Timer.ONESHOT, callback=unbend)               
             
             # else just line follow
             if self.bending == False:
