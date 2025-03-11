@@ -1,6 +1,6 @@
 ON_PICO = True
 
-from config import *
+from config import INPUT_MODE
 
 from interface.col_sense import *
 from machine import Pin
@@ -75,3 +75,5 @@ def start_input_sim_monitor():
 def latest_pin_value(pin_id):
     global sim_input_pins
     return sim_input_pins[pin_id][sim_input_pins[pin_id][2]]
+
+
