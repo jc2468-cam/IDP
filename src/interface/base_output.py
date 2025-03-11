@@ -135,24 +135,3 @@ class Servo:
         half_duty = int(max_duty/2)
         grad = max_duty - min_duty
         self.pwm_pin.duty_u16(min_duty + int(grad * position))
-
-
-from machine import Pin, PWM
-from time import sleep
-# Set up PWM Pin for servo control
-servo_pin = machine.Pin(15)
-servo = PWM(servo_pin)
-# Set Duty Cycle for Different Angles
-#Set PWM frequency
-frequency = 50
-try:
- while True:
- #Servo at 0 degrees
- servo.duty_u16(min_duty)
- sleep(2)
- #Servo at 90 degrees
- servo.duty_u16(half_duty)
- sleep(2)
- #Servo at 180 degrees
- servo.duty_u16(max_duty)
- sleep(2) 
