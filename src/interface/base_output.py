@@ -1,3 +1,4 @@
+from config import AUTO_HOME, AUTO_HOME_POSITION
 from interface.telemetry_decorator import telemetry_out
 
 from machine import Pin, PWM, Timer
@@ -24,7 +25,7 @@ class Motor:
             self.dir_pin.value(0)
         else:
             self.dir_pin.value(1)
-            velocity += 1
+            velocity = -velocity
         self.pwm_pin.duty_u16(int(65535*velocity*self.vel_scale))
 
 class Led:
@@ -60,31 +61,36 @@ class Led:
         timer.init(freq=frequency, mode=Timer.PERIODIC, callback=flip_led)
 
 class Actuator:
-    def __init__(m_id):
+    def __init__(self, m_id):
         if m_id == 0:
-            self.dir_pin = Pin(4, Pin.OUT)
-            self.pwm_pin = PWM(Pin(5))
+            self.dir_pin = Pin(0, Pin.OUT)
+            self.pwm_pin = PWM(Pin(1))
         else:
-            self.dir_pin = Pin(7, Pin.OUT)
-            self.pwm_pin = PWM(Pin(6))
+            self.dir_pin = Pin(3, Pin.OUT)
+            self.pwm_pin = PWM(Pin(2))
         self.pwm_pin.freq(1000)
         self.pwm_pin.duty_u16(0)
         self.position = None
         self.runs = 0
         self.m_id = m_id
+
+        if AUTO_HOME:
+            self.home(AUTO_HOME_POSITION)
+    def set_position(self, position):
+        self.position = position
     @telemetry_out(lambda self: f"Actuator::off({self.m_id})")
     def off(self):
         self.pwm_pin.duty_u16(0)
-    @telemetry_out(lambda self, velocity: f"Actuator::extend({self.m_id}, {velocity * self.vel_scale})")
-    def extend(self, velocity):
+    @telemetry_out(lambda self, velocity=1.0: f"Actuator::extend({self.m_id}, {velocity})")
+    def extend(self, velocity=1.0):
         if velocity > 0:
             self.dir_pin.value(0)
         else:
             self.dir_pin.value(1)
-            velocity += 1
-        self.pwm_pin.duty_u16(int(65535*velocity*self.vel_scale))
+            velocity = -velocity
+        self.pwm_pin.duty_u16(int(65535*velocity))
     @telemetry_out(lambda self, retract=True, timeout=1000: f"Actuator::home({self.m_id}, {retract})")
-    def home(self, retract, timeout):
+    def home(self, retract=True, timeout=8000):
         self.dir_pin.value(1 if retract else 0)
         self.pwm_pin.duty_u16(int(65535))
 
@@ -95,7 +101,7 @@ class Actuator:
         timer = Timer()
         timer.init(mode=Timer.ONE_SHOT, period=timeout, callback=homeing_end)
     def extend_to(self, target, rate=1):
-        full_time = 500
+        full_time = 7800
 
         if self.position == None:
             raise RuntimeError
@@ -107,26 +113,22 @@ class Actuator:
                 self.position = target
                 self.runs += 1
 
-            vel = rate if dist > 1 else -1
-            timeout = abs(dist) * full_time // rate
-            self.run(vel)
+            vel = rate if dist > 0 else -1
+            timeout = int(abs(dist) * full_time / rate)
+            self.extend(vel)
 
             timer = Timer()
             timer.init(mode=Timer.ONE_SHOT, period=timeout, callback=extension_end)
 
 class Servo:
-    def __init__(m_id, initial_pos=0):
+    def __init__(self, m_id, initial_pos=0):
         max_duty = 7864
         min_duty = 1802
         half_duty = int(max_duty/2)
-        if m_id == 0:
-            self.dir_pin = Pin(4, Pin.OUT)
-            self.pwm_pin = PWM(Pin(5))
-        else:
-            self.dir_pin = Pin(7, Pin.OUT)
-            self.pwm_pin = PWM(Pin(6))
-        self.pwm_pin.freq(1000)
-        self.pwm_pin.duty_u16(0)
+
+        self.pwm_pin = PWM(Pin(15 if m_id == 0 else 13))
+        self.pwm_pin.freq(50)
+        self.pwm_pin.duty_u16(min_duty)
         self.m_id = 0
     @telemetry_out(lambda self, position: f"Servo::set_position({self.m_id}, {position})")
     def set_position(self, position):
