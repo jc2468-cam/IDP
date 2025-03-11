@@ -39,15 +39,9 @@ class TrackedTank:
         self.wheel_circ = wheel_diam * pi
     def default(axle_length, wheel_diam, vel_scale=1.0):
         return TrackedTank(Motor(0, vel_scale), Motor(1, vel_scale), axle_length, wheel_diam)
-    def drive(self, v_f, *args):
+    def drive(self, v_f, v_r=0, t=0):
         """makes the tank drive at a forward speed v_f and in an arc at speed v_r
         If 2 arguments passed, take them to be v_r and t."""
-        if len(args) == 0:
-            v_r, t = 0, 0
-        elif len(args) == 1:
-            v_r, t = 0, args[0]
-        else:
-            v_r, t = args[0], args[1]
         self.tick(t)
         v0, v1 = self.inner.get_motor_speeds(v_f, v_r)
         cal_v0 = 0.0 if v0 < MOTOR_CAL_T else MOTOR_CAL_M * v0 + MOTOR_CAL_C

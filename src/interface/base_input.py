@@ -10,7 +10,6 @@ class DigitalInput:
         self.pin = Pin(pin_id, Pin.IN, Pin.PULL_DOWN)
     def value(self):
         global INPUT_MODE
-        INPUT_MODE = 0
         if INPUT_MODE == 0:
             return self.pin.value()
         elif INPUT_MODE == 1:
