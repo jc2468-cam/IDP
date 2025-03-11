@@ -15,6 +15,8 @@ class Tank:
         return Tank(Motor(0, vel_scale), Motor(1, vel_scale), axle_length)
     def drive(self, v_f, v_r=0.0):
         self.run_raw(*self.get_motor_speeds(v_f, v_r))
+    def spin(self, v):
+        self.run_raw(v, -v)
     def stop(self):
         self.m0.off()
         self.m1.off()
@@ -39,17 +41,22 @@ class TrackedTank:
         self.wheel_circ = wheel_diam * pi
     def default(axle_length, wheel_diam, vel_scale=1.0):
         return TrackedTank(Motor(0, vel_scale), Motor(1, vel_scale), axle_length, wheel_diam)
+    def update_motion(self, v0, v1):
+        cal_v0 = 0.0 if v0 < MOTOR_CAL_T else MOTOR_CAL_M * v0 + MOTOR_CAL_C
+        cal_v1 = 0.0 if v1 < MOTOR_CAL_T else MOTOR_CAL_M * v1 + MOTOR_CAL_C
+        cal_v_f, cal_v_r = 0.5 * (cal_v0 + cal_v1), 0.5 * (cal_v0 - cal_v1) / self.inner.axle_rad
+        self.motion = [cal_v_f, cal_v_r]
     def drive(self, v_f, v_r=0, t=0):
         """makes the tank drive at a forward speed v_f and in an arc at speed v_r
         If 2 arguments passed, take them to be v_r and t."""
         if t != 0:
             self.tick(t)
         v0, v1 = self.inner.get_motor_speeds(v_f, v_r)
-        cal_v0 = 0.0 if v0 < MOTOR_CAL_T else MOTOR_CAL_M * v0 + MOTOR_CAL_C
-        cal_v1 = 0.0 if v1 < MOTOR_CAL_T else MOTOR_CAL_M * v1 + MOTOR_CAL_C
-        cal_v_f, cal_v_r = 0.5 * (cal_v0 + cal_v1), 0.5 * (cal_v0 - cal_v1) / self.inner.axle_rad
-        self.motion = [cal_v_f, cal_v_r]
-        self.inner.drive(v_f, v_r)
+        self.update_motion(v0, v1)
+        self.inner.run_raw(v0, v1)
+    def spin(self, v):
+        self.update_motion(v, -v)
+        self.inner.run_raw(v, -v)
     def stop(self):
         self.inner.stop()
     def tick(self, time):

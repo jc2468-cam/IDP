@@ -16,7 +16,7 @@ class DigitalInput:
             return self.pin.value()
         elif INPUT_MODE == 1:
             global sim_input_pins
-            return sim_input_pins[self.pin_id]
+            return sim_input_pins[self.pin_id][0]
         elif INPUT_MODE == 2:
             global sim_input_pins
             next_val = self.pin.value()
@@ -48,6 +48,7 @@ def null_callback(p):
 def start_input_sim_monitor():
     def inner():
         global sim_input_pins, sim_pin_interupt_callbacks, sim_command_inputs
+        # [simulated, real, last updated index]
         sim_input_pins = [[0, 0, 1] for _ in range(28)]
         sim_pin_interupt_callbacks = [(null_callback, 0) for _ in range(28)]
         sim_command_inputs = dict()

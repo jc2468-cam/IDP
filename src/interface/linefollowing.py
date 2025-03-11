@@ -191,10 +191,13 @@ class LineSensor:
             if self.bending == False:
                 #print("integrating")
                 self.integral += control_function(self) * time_interval
+                print("pos:", self.tank.tick(time_interval))
                 self.tank.drive(v_f, control_function(self))
                 #print("control function = ", control_function(self))
         
-        timer = Timer()
-        timer.init(freq=(1/time_interval), mode=Timer.PERIODIC, callback=integrate)  
+        self.timer = Timer()
+        self.timer.init(freq=(1/time_interval), mode=Timer.PERIODIC, callback=integrate)  
         #timer2 = Timer()
         #timer2.init(freq=(1/time_interval), mode=Timer.PERIODIC, callback=tick)
+    def stop_follow(self):
+        self.timer.deinit()
