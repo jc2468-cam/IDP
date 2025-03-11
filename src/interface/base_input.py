@@ -4,7 +4,7 @@ from config import *
 
 from interface.col_sense import *
 from machine import Pin
-from config import *
+
 
 class DigitalInput:
     def __init__(self, pin_id):
