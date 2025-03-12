@@ -1,4 +1,4 @@
-from floyds import x #temporary weights graph
+from floyds import raw_graph
 
 def initialise(V):
     global dis, Next
@@ -49,23 +49,24 @@ def printPath(path):
         print(path[i], end=" -> ")
     print (path[n - 1])
 
-if __name__ == '__main__':
-    MAXM,INF = 2000,10**7
-    dis = [[-1 for i in range(MAXM)] for i in range(MAXM)]
-    Next = [[-1 for i in range(MAXM)] for i in range(MAXM)]
+# if __name__ == '__main__':
+#     MAXM,INF = 2000,10**4
+#     dis = [[-1 for i in range(MAXM)] for i in range(MAXM)]
+#     Next = [[-1 for i in range(MAXM)] for i in range(MAXM)]
  
-    graph = x
-    V = len(graph)-1
+#     graph = x
+#     print(graph[50:])
+#     V = len(graph)-1
  
-    # Function to initialise the distance and Next array
-    initialise(V)
+#     # Function to initialise the distance and Next array
+#     initialise(V)
  
-    # Calling Floyd Warshall Algorithm, updates nextand distance array
-    floydWarshall(V)
-    path = []
+#     # Calling Floyd Warshall Algorithm, updates nextand distance array
+#     floydWarshall(V)
+#     path = []
  
-    print("Shortest path: ", end = "")
-    path = constructPath(2,48) #nodes to travel between
-    printPath(path)
+#     print("Shortest path: ", end = "")
+#     path = constructPath(2,48) #nodes to travel between
+#     print(path)
  
  

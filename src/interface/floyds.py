@@ -17,11 +17,11 @@ def zerotoinfinity(mat):
     for i in range(len(mat)):
         for j in range(len(mat[i])):
             if mat[i][j] == 0:
-                mat[i][j] = 10**7
+                mat[i][j] = 10**4
     return mat
 
 
-def getweightsmatrix(inputfile='src/weights.csv'):
+def getweightsmatrix(inputfile='host_src/weights.csv'):
     #turns csv into 2x2 matrix
     weights = []
 
@@ -33,7 +33,7 @@ def getweightsmatrix(inputfile='src/weights.csv'):
     weights = [[int(element) for element in row] for row in weights]
     return weights
 
-x= zerotoinfinity(addturnweights(getweightsmatrix('src/testweights.csv'))) #change testweights to weights
+x = zerotoinfinity(addturnweights(getweightsmatrix(r"C:\Code\IDP\src\interface\weights.csv"))) #change testweights to weights
 
 def floydWarshall(graph,V):
     for k in range(V-1):
