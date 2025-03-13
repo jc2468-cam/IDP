@@ -1,7 +1,7 @@
 from .base_input import DigitalInput
 from machine import Timer
 from .interface import Tank, TrackedTank
-from .shortestpath import *
+#from .shortestpath import *
 from utime import sleep, ticks_ms
 
 class LineSensor:

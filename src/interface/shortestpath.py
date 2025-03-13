@@ -1,4 +1,4 @@
-from floyds import raw_graph
+from interface.floyds import raw_graph
 
 def initialise(V):
     global dis, Next
