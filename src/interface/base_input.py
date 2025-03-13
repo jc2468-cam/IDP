@@ -1,8 +1,9 @@
 ON_PICO = True
 
 from config import INPUT_MODE
-
 from interface.col_sense import *
+
+from utime import sleep
 from machine import Pin
 
 
@@ -55,16 +56,22 @@ def start_input_sim_monitor():
 
         while True:
             command = input().strip()
-            if command[:9] == "Control::":
+            if command == "~":
+                sleep(0.3)
+            elif command[:9] == "Control::":
                 if command[9:16] == "set_pin":
-                    p, v = [int(s) for s in command[1:-1].split(",")]
-                    old_v = sim_input_pins[p]
-                    sim_input_pins[p] = v
-                    sim_input_pins[p][1] = False
+                    print(command[17:-1].split(","))
+                    p, v = [int(s) for s in command[17:-1].split(",")]
+                    old_v = sim_input_pins[p][sim_input_pins[p][2]]
+                    sim_input_pins[p][0] = v
+                    sim_input_pins[p][1] = 0
                     if old_v != v and sim_pin_interupt_callbacks[p][1] == v:
                         sim_pin_interupt_callbacks[p][0](p)
                 elif "#" in command[9:]:
                     identifier = command[9:].split("#")
+                elif command[9:13] == "kill":
+                    print("Stopping input thread")
+                    break
                 else:
                     identifier = command[9:].split("(")[0]
                     sim_command_inputs[identifier] = [command[9:], 1]
@@ -76,5 +83,3 @@ def start_input_sim_monitor():
 def latest_pin_value(pin_id):
     global sim_input_pins
     return sim_input_pins[pin_id][sim_input_pins[pin_id][2]]
-
-
