@@ -8,7 +8,7 @@ def telemetry_out(get_telem_str, supress=True):
         if OUTPUT_MODE == 0:
             return fn
         elif OUTPUT_MODE == 1 and supress:
-            return get_telem_str
+            return lambda *args: print(get_telem_str(*args))
         else:
             def inner(*args):
                 print(get_telem_str(*args))
