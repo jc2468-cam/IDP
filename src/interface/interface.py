@@ -42,8 +42,8 @@ class TrackedTank:
     def default(axle_length, wheel_diam, vel_scale=1.0):
         return TrackedTank(Motor(0, vel_scale), Motor(1, vel_scale), axle_length, wheel_diam)
     def update_motion(self, v0, v1):
-        cal_v0 = 0.0 if v0 < MOTOR_CAL_T else MOTOR_CAL_M * v0 + MOTOR_CAL_C
-        cal_v1 = 0.0 if v1 < MOTOR_CAL_T else MOTOR_CAL_M * v1 + MOTOR_CAL_C
+        cal_v0 = 0.0 if abs(v0) < MOTOR_CAL_T else MOTOR_CAL_M * v0 + MOTOR_CAL_C
+        cal_v1 = 0.0 if abs(v1) < MOTOR_CAL_T else MOTOR_CAL_M * v1 + MOTOR_CAL_C
         cal_v_f, cal_v_r = 0.5 * (cal_v0 + cal_v1), 0.5 * (cal_v0 - cal_v1) / self.inner.axle_rad
         self.motion = [cal_v_f, cal_v_r]
     def drive(self, v_f, v_r=0, t=0):
@@ -61,6 +61,8 @@ class TrackedTank:
         self.inner.stop()
     def tick(self, time):
         radial = (self.motion[1] * time * self.wheel_circ) % pi
+        if self.motion[1] < 0:
+            radial -= pi
         if abs(self.motion[1]) < 1e-3:
             dist = self.motion[0] * self.wheel_circ * time
             theta = self.pos[2] + (0.5 * radial)
