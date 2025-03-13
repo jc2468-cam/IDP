@@ -8,11 +8,12 @@ class LineSensor:
     
     """class containing the 4 line sensors and relevant functions"""
     # define the sensors as pin inputs
-    def __init__(self, tank, sensor_1_pin, sensor_2_pin, sensor_3_pin, sensor_4_pin):
+    def __init__(self, tank, sensor_1_pin, sensor_2_pin, sensor_3_pin, sensor_4_pin, button_pin):
         self.sensor1 = DigitalInput(sensor_1_pin)
         self.sensor2 = DigitalInput(sensor_2_pin)
         self.sensor3 = DigitalInput(sensor_3_pin)
         self.sensor4 = DigitalInput(sensor_4_pin)
+        self.button = DigitalInput(button_pin)
         
         # tank must be a tank object. raise objection if not
         self.tank = tank
