@@ -17,7 +17,7 @@ def zerotoinfinity(mat):
     for i in range(len(mat)):
         for j in range(len(mat[i])):
             if mat[i][j] == 0:
-                mat[i][j] = 10**4
+                mat[i][j] = 10**7
     return mat
 
 

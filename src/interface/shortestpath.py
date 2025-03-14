@@ -50,7 +50,7 @@ def printPath(path):
     print (path[n - 1])
 
 if __name__ == '__main__':
-    MAXM,INF = 2000,10**4
+    MAXM,INF = 2000,10**7
     dis = [[-1 for i in range(MAXM)] for i in range(MAXM)]
     Next = [[-1 for i in range(MAXM)] for i in range(MAXM)]
  
@@ -65,7 +65,24 @@ if __name__ == '__main__':
     path = []
  
     print("Shortest path: ", end = "")
-    path = constructPath(2,45) # nodes to travel between
-    print(path)
+    # start, warehouse, factory, front, back, blue, red
+    locations = [2, 26, 47, 40, 42, 68, 65]
+    destinations = []
+    matrix = []
+    for i in locations:
+        path_array = []
+        for j in locations:
+            path = constructPath(i, j) # nodes to travel between
+            path_weight = 0
+            for k in range(len(path) - 1):
+                path_weight += graph[path[k] - 1][path[k+1] - 1]
+            path_array.append(path_weight)
+        matrix.append(path_array)
+        
+    for element in matrix:
+        if element == 0:
+            element = 10**7
+            
+    print(matrix)
  
  

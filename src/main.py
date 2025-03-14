@@ -28,6 +28,9 @@ tank.stop()
 
 actuator = Actuator(0)
 servo = Servo(0)
+servo.slow_set_position(0.5)
+sleep(6)
+servo.slow_set_position(0)
 
 i2c_bus = I2C(0, sda=Pin(16), scl=Pin(17))
 # print(i2c_bus.scan())
@@ -53,6 +56,7 @@ def reverse_turns(path):
     extras = [a[1:] for a in path[start_i:end_i]]
     return path[:start_i] + [t + e for t, e in zip(turns, extras)] + path[end_i:]
 
+test_location = 0
 
 # start
 front_house_start_path = [[("t", 0)], [("t", 0)], [("t", 1)], [("t", -1)], [("p", 0)]]
@@ -150,37 +154,58 @@ if MODE == 0:
     
 elif MODE == 1:
     print("driving mode 1")
+    led = DigitalInput(1)
     sensor1 = DigitalInput(9)
     sensor2 = DigitalInput(10)
     sensor3 = DigitalInput(11)
     sensor4 = DigitalInput(12)
+    led.on()
+    # list of blocks on the rack
+    # -1 for unknown, 0 for red, 1 for blue
     blocks = []
     active_block = 0
     servo_step = 2/3
     scheduled_extra = list()
     max_blocks = 2
+    
+    # weights matrix from floyds, needs updating
+    weights = [[0, 284, 389, 52, 300, 0, 0], [304, 0, 179, 336, 188, 0, 0], [320, 179, 0, 347, 40, 0, 0], [52, 316, 357, 0, 332, 0, 0], [300, 168, 111, 332, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0]]
+    test_path = ["start", "front_house", "factory", "red_drop"]
+    
     while True:
         if driving == False:
-            pos = 0
-
-            if location == "start":
-                next_location = "front_house"
-                path = front_house_start_path
-
-            if len(blocks) == max_blocks:
-                if 0 in blocks:
-                    next_location = "red_drop"
-                    if blocks[active_block] != 0:
-                        counter = 0
-                        for b in blocks:
-                            if b != 0:
-                                counter += 1:
-                            else:
-                                break
-                        servo.slow_set_position(servo_step * counter)
+            if len(test_path) > 0:
+                if test_location == 0:
+                    next_location = "front_house"
+                    path = front_house_start_path
                 else:
-                    next_location = "blue_drop"
+                    location = test_path[test_location - 1]
+                    next_location = test_path[test_location]
+                    test_location += 1
+                if test_location == len(test_path):
+                    tank.stop()
+            
+            else:
+                pos = 0
 
+                if location == "start":
+                    next_location = "front_house"
+                    path = front_house_start_path
+
+                if len(blocks) == max_blocks:
+                    if 0 in blocks:
+                        next_location = "red_drop"
+                        if blocks[active_block] != 0:
+                            counter = 0
+                            for b in blocks:
+                                if b != 0:
+                                    counter += 1
+                                else:
+                                    break
+                            servo.slow_set_position(servo_step * counter)
+                    else:
+                        next_location = "blue_drop"
+                        
             if location == "warehouse":
                 if next_location == "factory":
                     path = warehouse_factory_path
@@ -216,7 +241,7 @@ elif MODE == 1:
                     path = front_house_drop_path[0]
                 if next_location == "blue_drop":
                     path = front_house_drop_path[1]
-  
+
             if location == "back_house":
                 if next_location == "warehouse":
                     path = back_house_warehouse_path
@@ -253,8 +278,8 @@ elif MODE == 1:
                 if next_location == "red_drop":
                     path = blue_drop_red_drop_path
 
-            driving = True
-            location = next_location
+                driving = True
+                location = next_location
 
         if driving == True:
             while sensor1.value() == 0 and sensor4.value() == 0:
@@ -284,7 +309,7 @@ elif MODE == 1:
                     if value < 0:
                         tank.spin(value * 0.9)
                         print("Spinning")
-                        sleep(t)
+                        sleep(0.95)
                         tank.log_sleep(0.95)
                     else:
                         tank.log_sleep(0.3)
@@ -297,7 +322,7 @@ elif MODE == 1:
                         print("Guessed RED")
                         blocks.append(0)
                     else:
-                        print("Guessed RED")
+                        print("Guessed BLUE")
                         blocks.append(1)
                 elif command == "l":
                     actuator.extend_to(0)
