@@ -1,4 +1,5 @@
 from config import *
+from machine import I2C
 
 from interface.interface import *
 from interface.base_output import *
@@ -28,13 +29,10 @@ tank.stop()
 
 actuator = Actuator(0)
 servo = Servo(0)
-servo.slow_set_position(0.5)
-sleep(6)
-servo.slow_set_position(0)
 
-i2c_bus = I2C(0, sda=Pin(16), scl=Pin(17))
+#i2c_bus = I2C(0, sda=Pin(16), scl=Pin(17))
 # print(i2c_bus.scan())
-tcs = TCS34725(i2c_bus)
+#tcs = TCS34725(i2c_bus)
 
 global MODE
 
@@ -59,7 +57,7 @@ def reverse_turns(path):
 test_location = 0
 
 # start
-front_house_start_path = [[("t", 0)], [("t", 0)], [("t", 1)], [("t", -1)], [("p", 0)]]
+front_house_start_path = [[("t", 0)], [("t", 1)], [("t", -1)], [("p", 0)]]
 
 # [0] drop red, [1] drop blue
 back_house_drop_path = [[[("t", -1)], [("t", -1)], [("t", -1)], [("t", 0)], [("t", 0)], [("t", 1)], [("d", 0)]], [[("t", -1)], [("t", -1)], [("t", 0)], [("d", 0)]]]
@@ -103,18 +101,19 @@ pos = 0
 location = "start"
 
 dt = 0.07
-v_f = 0.9
+v_f = 0.7
 button = DigitalInput(8)
 MODE = 3
-line_sensors = LineSensor(tank, 9, 10, 11, 12)
-driving = True
+line_sensors = LineSensor(tank, 9, 10, 11, 12, 1)
+driving = False
+range_sensor = I2C(1, scl=Pin(17), sda=Pin(16))
 
 def begin(p=0):
     global MODE
     MODE = 1
 
-while MODE > 2:
-    button.bind_interupt(begin, 1)
+#while MODE > 2:
+    #button.bind_interupt(begin, 1)
 
 if MODE == 0:
     line_sensors.line_follow(v_f, dt)
@@ -154,7 +153,7 @@ if MODE == 0:
     
 elif MODE == 1:
     print("driving mode 1")
-    led = DigitalInput(1)
+    led = Led(1)
     sensor1 = DigitalInput(9)
     sensor2 = DigitalInput(10)
     sensor3 = DigitalInput(11)
@@ -170,20 +169,27 @@ elif MODE == 1:
     
     # weights matrix from floyds, needs updating
     weights = [[0, 284, 389, 52, 300, 0, 0], [304, 0, 179, 336, 188, 0, 0], [320, 179, 0, 347, 40, 0, 0], [52, 316, 357, 0, 332, 0, 0], [300, 168, 111, 332, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0]]
-    test_path = ["start", "front_house", "factory", "red_drop"]
+    test_path = ["front_house", "factory", "red_drop"]
+    
+    sleep(2)
     
     while True:
         if driving == False:
+            pos = 0
+            print("Getting path")
             if len(test_path) > 0:
                 if test_location == 0:
                     next_location = "front_house"
                     path = front_house_start_path
+                    test_location = 1
                 else:
                     location = test_path[test_location - 1]
                     next_location = test_path[test_location]
                     test_location += 1
                 if test_location == len(test_path):
                     tank.stop()
+                print("Using test path")
+                driving = True
             
             else:
                 pos = 0
@@ -202,7 +208,7 @@ elif MODE == 1:
                                     counter += 1
                                 else:
                                     break
-                            servo.slow_set_position(servo_step * counter)
+                            servo.slow_set_position(0, servo_step * counter)
                     else:
                         next_location = "blue_drop"
                         
@@ -283,34 +289,30 @@ elif MODE == 1:
 
         if driving == True:
             while sensor1.value() == 0 and sensor4.value() == 0:
-                v_r = -0.02 * (sensor2.value() - sensor3.value())
+                v_r = -0.017 * (sensor2.value() - sensor3.value())
                 if LOG_POSITION:
                     print("pos:", tank.tick(dt))
                 tank.drive(v_f, v_r)
                 sleep(dt)
             tank.log_sleep(dt)
             if pos == len(path):
-                tank.drive(0.5)
-                sleep(2)
-                tank.stop()
-                break
+                driving = False
             new_scheduled_extra = list()
             for instruction in path[pos] + scheduled_extra:
                 command = instruction[0]
                 value = instruction[1]
                 print("Junction Detected", command, value)
                 if command == "t":
-                    sleep(0.3)
+                    sleep(0.2)
                     tank.log_tick(0.3)
                     if value > 0:
                         tank.spin(value * 0.9)
                         print("Spinning")
-                        tank.log_sleep(0.65)
+                        tank.log_sleep(0.6)
                     if value < 0:
                         tank.spin(value * 0.9)
                         print("Spinning")
-                        sleep(0.95)
-                        tank.log_sleep(0.95)
+                        tank.log_sleep(0.85)
                     else:
                         tank.log_sleep(0.3)
                     tank.stop()
@@ -331,29 +333,42 @@ elif MODE == 1:
                         tank.stop()
                         actuator.extend_to(0.1)
                         sleep(1)
-                        servo.slow_set_position(2 / 3)
-                        sleep(3)
+                        servo.slow_set_position(0, 2 / 3)
                         active_block = 1 - active_block
-                        new_scheduled_extra.append(("c", 0))
+                        #new_scheduled_extra.append(("c", 0))
                     else:
                         tank.stop()
                         actuator.extend_to(0)
                         sleep(5)
                     tank.drive(-v_f)
-                    tank.log_sleep(1)
+                    tank.log_sleep(0.7)
+                    tank.stop()
+                    sleep(0.3)
                     tank.spin(1)
-                    tank.log_sleep(1.7)
+                    tank.log_sleep(1.5)
                     tank.stop()
                     driving = False
+                    pos = 0
+                    sleep(1.0)
                 sleep(0.3)
             tank.drive(v_f)
-            scheduled_extra = new_scheduled_extra
+            if len(new_scheduled_extra) > 0:
+                scheduled_extra = new_scheduled_extra
             pos += 1
+            if pos == len(path):
+                driving = False
+                pos = 0
     while True:
         pass
     
-elif MODE == 2:
+if MODE == 2:
     tank.drive(0.6, -0.02)
     for _ in range(50):
         print("pos:", tank.tick(dt))
         sleep(dt)
+        
+if MODE == 3:
+    print("driving mode 3")
+    while True:
+        print(range_sensor.value())
+        sleep(0.5)

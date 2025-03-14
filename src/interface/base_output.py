@@ -1,4 +1,4 @@
-from config import AUTO_HOME, AUTO_HOME_POSITION, MAX_EXTENSION
+from config import AUTO_HOME, AUTO_HOME_POSITION, MAX_EXTENSION, OUTPUT_MODE
 from interface.telemetry_decorator import telemetry_out
 
 from machine import Pin, PWM, Timer
@@ -136,16 +136,18 @@ class Servo:
         half_duty = int(max_duty/2)
         grad = max_duty - min_duty
         self.pwm_pin.duty_u16(min_duty + int(grad * position))
-    def slow_set_position(self, position, increments=20, time=5):
+    def slow_set_position(self, start_pos, position, increments=30, time=5):
         frequency = increments / time
-        increment_size = (position - self.position) / increments
+        delta = position - start_pos
+        global i
         i = 0
 
         def advance_position(t):
-            self.set_position(self.position + increment_size)
+            global i
+            self.set_position(start_pos + (i / increments) * delta)
             i += 1
-            if i == 20:
+            if i == increments:
                 t.deinit()
 
         timer = Timer()
-        timer.init(freq=frequency, mode=Timer.PERIODIC, callback=flip_led)
+        timer.init(freq=frequency, mode=Timer.PERIODIC, callback=advance_position)
