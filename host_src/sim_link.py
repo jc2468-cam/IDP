@@ -5,7 +5,7 @@ import pygame
 import serial
 
 
-board = serial.Serial("COM5", 115200, timeout=2)
+board = serial.Serial("COM5", 115200, timeout=4)
 
 
 env_points = [(0,0), (30,0), (30,100), (30,-100)]
@@ -33,6 +33,7 @@ board.write(b"Control::start\r\n")
 discard(board)
 bot.fetch_params(board)
 
+counter = 0
 exit = False
 redraw = False
 for l in board:
@@ -73,3 +74,15 @@ for l in board:
         pygame.draw.line(canvas, (0,128,255), pc_s, facing_s)
         pygame.draw.rect(canvas, (255,0,0), pygame.Rect(xc-5,yc-5,10,10))
         pygame.display.update()
+
+        counter += 1
+        if counter == 10:
+            board.write(b"~\r\n")
+            discard(board)
+            board.write(b"Control::set_pin(9,1)\r\n")
+            discard(board)
+        if counter == 11:
+            board.write(b"~\r\n")
+            discard(board)
+            board.write(b"Control::set_pin(9,0)\r\n")
+            discard(board)

@@ -66,6 +66,8 @@ class RoboSim:
             raise ValueError
     def predict_pos(self, time):
         radial = (self.motion_s[1] * time * self.wheel_circ) % pi
+        if self.motion_s[1] < 0:
+            radial -= pi
         if abs(self.motion_s[1]) < 1e-3:
             dist = self.motion_s[0] * self.wheel_circ * time
             theta = self.pos_s[2] + (0.5 * radial)
@@ -97,8 +99,8 @@ class RoboSim:
     def get_predicted_points(self, xc, yc, scale, bot_half_size, bot_facing_len):
         return self.get_points(self.pos_s, xc, yc, scale, bot_half_size, bot_facing_len)
     def recalculate_motion(self):
-        cal_v0 = 0.0 if self.v0 < self.motor_cal_t else self.motor_cal_m * self.v0 + self.motor_cal_c
-        cal_v1 = 0.0 if self.v1 < self.motor_cal_t else self.motor_cal_m * self.v1 + self.motor_cal_c
+        cal_v0 = 0.0 if abs(self.v0) < self.motor_cal_t else self.motor_cal_m * self.v0 + self.motor_cal_c
+        cal_v1 = 0.0 if abs(self.v1) < self.motor_cal_t else self.motor_cal_m * self.v1 + self.motor_cal_c
         cal_v_f, cal_v_r = 0.5 * (cal_v0 + cal_v1), 0.5 * (cal_v0 - cal_v1) / self.axle_rad
         self.motion_s = [cal_v_f, cal_v_r]
     def set_m0_v(self, velocity):
