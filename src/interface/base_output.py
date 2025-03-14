@@ -1,4 +1,4 @@
-from config import AUTO_HOME, AUTO_HOME_POSITION
+from config import AUTO_HOME, AUTO_HOME_POSITION, MAX_EXTENSION
 from interface.telemetry_decorator import telemetry_out
 
 from machine import Pin, PWM, Timer
@@ -101,6 +101,9 @@ class Actuator:
         timer = Timer()
         timer.init(mode=Timer.ONE_SHOT, period=timeout, callback=homeing_end)
     def extend_to(self, target, rate=1):
+        if target > MAX_EXTENSION:
+            print("WARNING: Instructed to extend past maximum extension")
+            target = MAX_EXTENSION
         full_time = 7800
 
         if self.position == None:
@@ -122,14 +125,10 @@ class Actuator:
 
 class Servo:
     def __init__(self, m_id, initial_pos=0):
-        max_duty = 7864
-        min_duty = 1802
-        half_duty = int(max_duty/2)
-
         self.pwm_pin = PWM(Pin(15 if m_id == 0 else 13))
         self.pwm_pin.freq(50)
-        self.pwm_pin.duty_u16(min_duty)
         self.m_id = 0
+        self.set_position(initial_pos)
     @telemetry_out(lambda self, position: f"Servo::set_position({self.m_id}, {position})")
     def set_position(self, position):
         max_duty = 7864
@@ -137,3 +136,16 @@ class Servo:
         half_duty = int(max_duty/2)
         grad = max_duty - min_duty
         self.pwm_pin.duty_u16(min_duty + int(grad * position))
+    def slow_set_position(self, position, increments=20, time=5):
+        frequency = increments / time
+        increment_size = (position - self.position) / increments
+        i = 0
+
+        def advance_position(t):
+            self.set_position(self.position + increment_size)
+            i += 1
+            if i == 20:
+                t.deinit()
+
+        timer = Timer()
+        timer.init(freq=frequency, mode=Timer.PERIODIC, callback=flip_led)

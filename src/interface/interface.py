@@ -4,6 +4,7 @@ from interface.base_output import *
 from interface.base_input import *
 
 from math import cos, sin, pi
+from utime import sleep
 
 
 class Tank:
@@ -76,6 +77,12 @@ class TrackedTank:
         self.pos[2] += radial
         self.pos[3] += time
         return self.pos
+    def log_tick(self, time):
+        if LOG_POSITION:
+            print("pos:", tank.tick(time))
+    def log_sleep(self, time):
+        sleep(time)
+        self.log_tick(time)
     def last_pos(self):
         """returns the last position of the tank in the form
         (x, y, radial, time)"""
