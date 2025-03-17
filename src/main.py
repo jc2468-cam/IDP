@@ -1,5 +1,6 @@
 from config import *
 from machine import I2C
+from interface.ranging import *
 
 from interface.interface import *
 from interface.base_output import *
@@ -32,11 +33,12 @@ actuator = Actuator(0)
 sleep(9)
 servo = Servo(0)
 
-range_sensor = I2C(0, sda=Pin(16), scl=Pin(17))
-
 #i2c_bus = I2C(0, sda=Pin(16), scl=Pin(17))
 # print(i2c_bus.scan())
 #tcs = TCS34725(i2c_bus)
+
+led = Led(28)
+led.off()
 
 global MODE
 
@@ -62,8 +64,8 @@ factory_time = 2
 warehouse_time = 2
 
 # start
-#front_house_start_path = [[("t", 0)], [("t", 1)], [("t", -1)], [("p", 0)]]
-front_house_start_path = [[("p", 0)], [("p", 0)], [("p", 0)], [("p", 0)], [("p", 0)], [("p", 0)], [("p", 0)], [("p", 0)]]
+#front_house_start_path = [[("t", 0)], [("t", 1)], [("t", -1), ("l", 0), ("s", front_house_time)], [("p", 0)]]
+front_house_start_path = [[("p", 0)], [("p", 0)], [("p", 0)], [("p", 0)], [("p", 0)], [("p", 0)], [("p", 0)]]
 
 # [0] drop red, [1] drop blue
 back_house_drop_path = [[[("t", -1)], [("t", -1)], [("t", -1)], [("t", 0)], [("t", 0)], [("t", 1)], [("d", 0)]], [[("t", -1)], [("t", -1)], [("t", 0)], [("d", 0)]]]
@@ -121,21 +123,27 @@ pos = 0
 location = "start"
 
 dt = 0.07
-v_f = 0.7
+v_f = 0.9
 button = DigitalInput(8)
 MODE = 1
 driving = False
 
 def begin(p=0):
+    sleep(2.0)
     global MODE
     MODE = 1
+    
+def stop(p=0):
+    global MODE
+    MODE = 5
 
-#while MODE > 2:
-    #button.bind_interupt(begin, 1)
+#button.bind_interupt(begin, 1)
+while MODE > 4:
+    sleep(0.5)
 
 if MODE == 1:
+    button.bind_interupt(stop, 1)
     print("driving mode 1")
-    led = Led(1)
     sensor1 = DigitalInput(9)
     sensor2 = DigitalInput(10)
     sensor3 = DigitalInput(11)
@@ -287,8 +295,7 @@ if MODE == 1:
                 value = instruction[1]
                 print("Junction Detected", command, value)
                 if command == "t":
-                    sleep(0.2)
-                    tank.log_tick(0.3)
+                    tank.log_sleep(0.1)
                     if value > 0:
                         tank.spin(value * 0.9)
                         print("Spinning")
@@ -314,8 +321,10 @@ if MODE == 1:
                     actuator.extend_to(0)
                 elif command == "s":
                     ttl = int(value / dt)
+                    print("ran")
                 elif command == "p" or command == "d":
                     if command == "p":
+                        print("picking")
                         tank.stop()
                         actuator.extend_to(0.1)
                         sleep(1)
@@ -344,3 +353,9 @@ if MODE == 1:
                 pos = 0
     while True:
         pass
+    
+elif MODE == 2:
+    while True:
+        sleep(0.1)
+        rgb = tcs.read('rgb')
+        print("rbg:", rgb)
