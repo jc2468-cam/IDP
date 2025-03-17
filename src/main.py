@@ -21,6 +21,7 @@ if AWAIT_LINK:
         print("Got param command", param_command)
 
 if INPUT_MODE == 1 or INPUT_MODE == 2:
+    print("Starting simulator input server")
     start_input_sim_monitor()
 
 
@@ -28,7 +29,10 @@ tank = TrackedTank.default(AXLE_LENGTH, 6.5)
 tank.stop()
 
 actuator = Actuator(0)
+sleep(9)
 servo = Servo(0)
+
+range_sensor = I2C(0, sda=Pin(16), scl=Pin(17))
 
 #i2c_bus = I2C(0, sda=Pin(16), scl=Pin(17))
 # print(i2c_bus.scan())
@@ -36,9 +40,6 @@ servo = Servo(0)
 
 global MODE
 
-
-def reverse_path(path):
-    return [(a[0], -a[1]) for a in path[:-1:-1]]
 
 def reverse_turns_strip(path):
     started = False
@@ -50,9 +51,8 @@ def reverse_turns_strip(path):
         elif path[i][0][0] == "t":
             start_i = i
             started = True
-    turns = [a[0] for a in path[start_i:end_i:-1]]
-    extras = [a[1:] for a in path[start_i:end_i]]
-    return path[:start_i] + [t + e for t, e in zip(turns, extras)] + path[end_i:]
+    turns = [[a[0]] for a in path[start_i:end_i][::-1]]
+    return turns
 
 test_location = 0
 
@@ -62,7 +62,8 @@ factory_time = 2
 warehouse_time = 2
 
 # start
-front_house_start_path = [[("t", 0)], [("t", 1)], [("t", -1)], [("p", 0)]]
+#front_house_start_path = [[("t", 0)], [("t", 1)], [("t", -1)], [("p", 0)]]
+front_house_start_path = [[("p", 0)], [("p", 0)], [("p", 0)], [("p", 0)], [("p", 0)], [("p", 0)], [("p", 0)], [("p", 0)]]
 
 # [0] drop red, [1] drop blue
 back_house_drop_path = [[[("t", -1)], [("t", -1)], [("t", -1)], [("t", 0)], [("t", 0)], [("t", 1)], [("d", 0)]], [[("t", -1)], [("t", -1)], [("t", 0)], [("d", 0)]]]
@@ -122,10 +123,8 @@ location = "start"
 dt = 0.07
 v_f = 0.7
 button = DigitalInput(8)
-MODE = 3
-line_sensors = LineSensor(tank, 9, 10, 11, 12, 1)
+MODE = 1
 driving = False
-range_sensor = I2C(1, scl=Pin(17), sda=Pin(16))
 
 def begin(p=0):
     global MODE
@@ -134,43 +133,7 @@ def begin(p=0):
 #while MODE > 2:
     #button.bind_interupt(begin, 1)
 
-if MODE == 0:
-    line_sensors.line_follow(v_f, dt)
-    line_sensors.find_path(4, 62)
-
-    """def next_junction(t):
-        print("hello")
-        global enabled
-        global line_sensors, pos, turns
-        
-        def reactivate(t):
-            global enabled, line_sensors
-            enabled = True
-            line_sensors.bending = False
-
-            line_sensors.line_follow(v_f, dt)
-        
-        if enabled:
-            enabled = False
-            if turns[pos] != 0:
-                line_sensors.bending = True
-                #sleep(0.2)
-                line_sensors.stop_follow()
-                sleep(0.3)
-                print("turning")
-                line_sensors.tank.spin(turns[pos] * 0.75)
-                timer = Timer()
-                timer.init(mode=Timer.ONE_SHOT, period=950, callback=reactivate)
-            else:
-                print("skipping")
-                sleep(0.2)
-                enabled = True
-            pos += 1"""
-
-    line_sensors.sensor1.bind_interupt(line_sensors.next_junction, 1)
-    line_sensors.sensor4.bind_interupt(line_sensors.next_junction, 1)
-    
-elif MODE == 1:
+if MODE == 1:
     print("driving mode 1")
     led = Led(1)
     sensor1 = DigitalInput(9)
@@ -317,8 +280,6 @@ elif MODE == 1:
                 sleep(dt)
                 counter += 1
             tank.log_sleep(dt)
-            if pos == len(path):
-                driving = False
             new_scheduled_extra = list()
             ttl = -1
             for instruction in path[pos] + scheduled_extra:
@@ -372,8 +333,6 @@ elif MODE == 1:
                     tank.spin(1)
                     tank.log_sleep(1.5)
                     tank.stop()
-                    driving = False
-                    pos = 0
                     sleep(1.0)
                 sleep(0.3)
             tank.drive(v_f)
@@ -385,15 +344,3 @@ elif MODE == 1:
                 pos = 0
     while True:
         pass
-    
-if MODE == 2:
-    tank.drive(0.6, -0.02)
-    for _ in range(50):
-        print("pos:", tank.tick(dt))
-        sleep(dt)
-        
-if MODE == 3:
-    print("driving mode 3")
-    while True:
-        print(range_sensor.value())
-        sleep(0.5)
