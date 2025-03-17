@@ -11,6 +11,19 @@ from interface.linefollowing import LineSensor
 from utime import sleep, ticks_ms
 from machine import Pin, PWM, Timer, I2C
 
+actuator = Actuator(0)
+sleep(10)
+#for i in range(1):
+print("C0")
+sleep(3)
+actuator.extend(1)
+print("C1")
+sleep(0.8)
+actuator.off()
+print("C2")
+sleep(5)
+print("C3")
+
 if AWAIT_LINK:
     print("AWAITING LINK")
     while input().strip() != "Control::start":
@@ -28,12 +41,33 @@ if INPUT_MODE == 1 or INPUT_MODE == 2:
 tank = TrackedTank.default(AXLE_LENGTH, 6.5)
 tank.stop()
 
-actuator = Actuator(0)
 servo = Servo(0)
 
+led = Led(28)
+led.off()
+
 #i2c_bus = I2C(0, sda=Pin(16), scl=Pin(17))
-# print(i2c_bus.scan())
+#print(i2c_bus.scan())
 #tcs = TCS34725(i2c_bus)
+
+"""# set up range sensor
+sda = Pin(16)
+scl = Pin(17)
+id = 0
+i2c = I2C(id=id, sda=sda, scl=scl)
+tof = VL53L0X(i2c)
+
+# the measuring_timing_budget is a value in us, the longer the budget, the more accurate the reading. 
+budget = tof.measurement_timing_budget_us
+print("Budget was:", budget)
+tof.set_measurement_timing_budget(40000)
+
+# Sets the VCSEL (vertical cavity surface emitting laser) pulse period for the 
+# given period type (VL53L0X::VcselPeriodPreRange or VL53L0X::VcselPeriodFinalRange) 
+# to the given value (in PCLKs). Longer periods increase the potential range of the sensor. 
+# Valid values are (even numbers only):
+tof.set_Vcsel_pulse_period(tof.vcsel_period_type[0], 12)
+tof.set_Vcsel_pulse_period(tof.vcsel_period_type[1], 8)"""
 
 global MODE
 
@@ -51,9 +85,10 @@ def reverse_turns_strip(path):
         elif path[i][0][0] == "t":
             start_i = i
             started = True
-    turns = [a[0] for a in path[start_i:end_i:-1]]
-    extras = [a[1:] for a in path[start_i:end_i]]
-    return path[:start_i] + [t + e for t, e in zip(turns, extras)] + path[end_i:]
+    turns = [[a[0]] for a in path[start_i:end_i][::-1]]
+    """extras = [a[1:] for a in path[start_i:end_i]]
+    return path[:start_i] + [t + e for t, e in zip(turns, extras)] + path[end_i:]"""
+    return turns[::-1]
 
 test_location = 0
 
@@ -63,7 +98,8 @@ factory_time = 2
 warehouse_time = 2
 
 # start
-front_house_start_path = [[("t", 0)], [("t", 1)], [("t", -1)], [("p", 0)]]
+#front_house_start_path = [[("t", 0)], [("t", 1)], [("t", -1), ("l", 0), ("s", front_house_time)], [("p", 0)]]
+front_house_start_path = [[("p", 0)], [("p", 0)], [("p", 0)], [("p", 0)], [("p", 0)], [("p", 0)], [("p", 0)]]
 
 # [0] drop red, [1] drop blue
 back_house_drop_path = [[[("t", -1)], [("t", -1)], [("t", -1)], [("t", 0)], [("t", 0)], [("t", 1)], [("d", 0)]], [[("t", -1)], [("t", -1)], [("t", 0)], [("d", 0)]]]
@@ -121,37 +157,23 @@ pos = 0
 location = "start"
 
 dt = 0.07
-v_f = 0.7
+v_f = 0.9
 button = DigitalInput(8)
-MODE = 1
+MODE = 5
 line_sensors = LineSensor(tank, 9, 10, 11, 12, 1)
 driving = False
-
-"""# set up range sensor
-sda = Pin(16)
-scl = Pin(17)
-id = 0
-i2c = I2C(id=id, sda=sda, scl=scl)
-tof = VL53L0X(i2c)
-
-# the measuring_timing_budget is a value in us, the longer the budget, the more accurate the reading. 
-budget = tof.measurement_timing_budget_us
-print("Budget was:", budget)
-tof.set_measurement_timing_budget(40000)
-
-# Sets the VCSEL (vertical cavity surface emitting laser) pulse period for the 
-# given period type (VL53L0X::VcselPeriodPreRange or VL53L0X::VcselPeriodFinalRange) 
-# to the given value (in PCLKs). Longer periods increase the potential range of the sensor. 
-# Valid values are (even numbers only):
-tof.set_Vcsel_pulse_period(tof.vcsel_period_type[0], 12)
-tof.set_Vcsel_pulse_period(tof.vcsel_period_type[1], 8)"""
 
 def begin(p=0):
     sleep(2.0)
     global MODE
     MODE = 1
+    
+def stop(p=0):
+    global MODE
+    MODE = 5
 
-while MODE > 2:
+while MODE > 4:
+    sleep(0.5)
     button.bind_interupt(begin, 1)
 
 if MODE == 0:
@@ -191,8 +213,8 @@ if MODE == 0:
     line_sensors.sensor4.bind_interupt(line_sensors.next_junction, 1)
     
 elif MODE == 1:
+    button.bind_interupt(stop, 1)
     print("driving mode 1")
-    led = Led(28)
     sensor1 = DigitalInput(9)
     sensor2 = DigitalInput(10)
     sensor3 = DigitalInput(11)
@@ -338,8 +360,6 @@ elif MODE == 1:
                 sleep(dt)
                 counter += 1
             tank.log_sleep(dt)
-            if pos == len(path):
-                driving = False
             new_scheduled_extra = list()
             ttl = -1
             for instruction in path[pos] + scheduled_extra:
@@ -347,8 +367,7 @@ elif MODE == 1:
                 value = instruction[1]
                 print("Junction Detected", command, value)
                 if command == "t":
-                    sleep(0.2)
-                    tank.log_tick(0.3)
+                    tank.log_sleep(0.1)
                     if value > 0:
                         tank.spin(value * 0.9)
                         print("Spinning")
@@ -374,10 +393,18 @@ elif MODE == 1:
                     actuator.extend_to(0)
                 elif command == "s":
                     ttl = int(value / dt)
+                    print("ran")
                 elif command == "p" or command == "d":
                     if command == "p":
+                        print("picking")
                         tank.stop()
-                        actuator.extend_to(0.1)
+                        sleep(5)
+                        actuator.extend(1)
+                        sleep(0.8)
+                        actuator.off()
+                        sleep(5)
+                        #actuator.extend_to(0.1)
+                        print("extending")
                         sleep(1)
                         servo.slow_set_position(0, 2 / 3)
                         active_block = 1 - active_block
@@ -393,8 +420,6 @@ elif MODE == 1:
                     tank.spin(1)
                     tank.log_sleep(1.5)
                     tank.stop()
-                    driving = False
-                    pos = 0
                     sleep(1.0)
                 sleep(0.3)
             tank.drive(v_f)
@@ -439,3 +464,9 @@ if MODE == 3:
     while True:
     # Start ranging
         print(tof.ping()-50, "mm")
+if MODE == 4:
+    while True:
+        sleep(0.1)
+        rgb = tcs.read('rgb')
+        print("rbg:", rgb)
+
