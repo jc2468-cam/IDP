@@ -1,7 +1,8 @@
-from config import AUTO_HOME, AUTO_HOME_POSITION, MAX_EXTENSION, OUTPUT_MODE
+from config import AUTO_HOME, AUTO_HOME_POSITION, MAX_EXTENSION, AWAIT_HOMING, OUTPUT_MODE
 from interface.telemetry_decorator import telemetry_out
 
 from machine import Pin, PWM, Timer
+from utime import sleep
 
 
 class Motor:
@@ -107,7 +108,16 @@ class Actuator:
         full_time = 7800
 
         if self.position == None:
-            raise RuntimeError
+            homing_failed = True
+            if AWAIT_HOMING != None:
+                dt = 0.5
+                for _ in range(int(AWAIT_HOMING / dt)):
+                    sleep(dt)
+                    if self.position != None:
+                        homing_failed = False
+                        break
+            if homing_failed:
+                raise RuntimeError
         dist = target - self.position
 
         if dist != 0:

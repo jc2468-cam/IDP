@@ -30,7 +30,6 @@ tank = TrackedTank.default(AXLE_LENGTH, 6.5)
 tank.stop()
 
 actuator = Actuator(0)
-sleep(9)
 servo = Servo(0)
 
 #i2c_bus = I2C(0, sda=Pin(16), scl=Pin(17))
@@ -127,6 +126,7 @@ v_f = 0.9
 button = DigitalInput(8)
 MODE = 1
 driving = False
+auto_junction = True
 
 def begin(p=0):
     sleep(2.0)
@@ -280,7 +280,7 @@ if MODE == 1:
 
         if driving == True:
             counter = 0
-            while sensor1.value() == 0 and sensor4.value() == 0 and counter != ttl:
+            while sensor1.value() == 0 and sensor4.value() == 0 and counter != ttl and not auto_junction:
                 v_r = -0.017 * (sensor2.value() - sensor3.value())
                 if LOG_POSITION:
                     print("pos:", tank.tick(dt))
@@ -326,8 +326,8 @@ if MODE == 1:
                     if command == "p":
                         print("picking")
                         tank.stop()
-                        actuator.extend_to(0.1)
-                        sleep(1)
+                        actuator.extend_to(0.15)
+                        sleep(10)
                         servo.slow_set_position(0, 2 / 3)
                         active_block = 1 - active_block
                         #new_scheduled_extra.append(("c", 0))
