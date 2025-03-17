@@ -1,5 +1,6 @@
 from config import *
 from machine import I2C
+from interface.ranging import *
 
 from interface.interface import *
 from interface.base_output import *
@@ -103,17 +104,36 @@ location = "start"
 dt = 0.07
 v_f = 0.7
 button = DigitalInput(8)
-MODE = 3
+MODE = 1
 line_sensors = LineSensor(tank, 9, 10, 11, 12, 1)
 driving = False
-range_sensor = I2C(1, scl=Pin(17), sda=Pin(16))
+
+"""# set up range sensor
+sda = Pin(16)
+scl = Pin(17)
+id = 0
+i2c = I2C(id=id, sda=sda, scl=scl)
+tof = VL53L0X(i2c)
+
+# the measuring_timing_budget is a value in us, the longer the budget, the more accurate the reading. 
+budget = tof.measurement_timing_budget_us
+print("Budget was:", budget)
+tof.set_measurement_timing_budget(40000)
+
+# Sets the VCSEL (vertical cavity surface emitting laser) pulse period for the 
+# given period type (VL53L0X::VcselPeriodPreRange or VL53L0X::VcselPeriodFinalRange) 
+# to the given value (in PCLKs). Longer periods increase the potential range of the sensor. 
+# Valid values are (even numbers only):
+tof.set_Vcsel_pulse_period(tof.vcsel_period_type[0], 12)
+tof.set_Vcsel_pulse_period(tof.vcsel_period_type[1], 8)"""
 
 def begin(p=0):
+    sleep(2.0)
     global MODE
     MODE = 1
 
-#while MODE > 2:
-    #button.bind_interupt(begin, 1)
+while MODE > 2:
+    button.bind_interupt(begin, 1)
 
 if MODE == 0:
     line_sensors.line_follow(v_f, dt)
@@ -153,12 +173,13 @@ if MODE == 0:
     
 elif MODE == 1:
     print("driving mode 1")
-    led = Led(1)
+    led = Led(28)
     sensor1 = DigitalInput(9)
     sensor2 = DigitalInput(10)
     sensor3 = DigitalInput(11)
     sensor4 = DigitalInput(12)
     led.on()
+    
     # list of blocks on the rack
     # -1 for unknown, 0 for red, 1 for blue
     blocks = []
@@ -369,6 +390,27 @@ if MODE == 2:
         
 if MODE == 3:
     print("driving mode 3")
+    
+    sda = Pin(16)
+    scl = Pin(17)
+    id = 0
+    tof = I2C(id=id, sda=sda, scl=scl)
+    # the measuting_timing_budget is a value in ms, the longer the budget, the more accurate the reading. 
+    budget = tof.measurement_timing_budget_us
+    print("Budget was:", budget)
+    tof.set_measurement_timing_budget(40000)
+
+    # Sets the VCSEL (vertical cavity surface emitting laser) pulse period for the 
+    # given period type (VL53L0X::VcselPeriodPreRange or VL53L0X::VcselPeriodFinalRange) 
+    # to the given value (in PCLKs). Longer periods increase the potential range of the sensor. 
+    # Valid values are (even numbers only):
+
+    # tof.set_Vcsel_pulse_period(tof.vcsel_period_type[0], 18)
+    tof.set_Vcsel_pulse_period(tof.vcsel_period_type[0], 12)
+
+    # tof.set_Vcsel_pulse_period(tof.vcsel_period_type[1], 14)
+    tof.set_Vcsel_pulse_period(tof.vcsel_period_type[1], 8)
+
     while True:
-        print(range_sensor.value())
-        sleep(0.5)
+    # Start ranging
+        print(tof.ping()-50, "mm")
