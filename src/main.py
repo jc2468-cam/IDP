@@ -6,7 +6,7 @@ from interface.interface import *
 from interface.base_output import *
 from calibrations import *
 from interface.linefollowing import LineSensor
-# from interface.shortestpath import *
+from interface.pathing import *
 
 from utime import sleep, ticks_ms
 from machine import Pin, PWM, Timer, I2C
@@ -42,80 +42,7 @@ led.off()
 global MODE
 
 
-def reverse_turns_strip(path):
-    started = False
-    start_i, end_i = 0, 0
-    for i in range(len(path)):
-        if started:
-            if path[i][0][0] != "t":
-                end_i = i
-        elif path[i][0][0] == "t":
-            start_i = i
-            started = True
-    turns = [[a[0]] for a in path[start_i:end_i][::-1]]
-    return turns
-
 test_location = 0
-
-front_house_time = 2
-back_house_time = 2
-factory_time = 2
-warehouse_time = 2
-
-# start
-#front_house_start_path = [[("t", 0)], [("t", 1)], [("t", -1), ("l", 0), ("s", front_house_time)], [("p", 0)]]
-front_house_start_path = [[("p", 0)], [("p", 0)], [("p", 0)], [("p", 0)], [("p", 0)], [("p", 0)], [("p", 0)]]
-
-# [0] drop red, [1] drop blue
-back_house_drop_path = [[[("t", -1)], [("t", -1)], [("t", -1)], [("t", 0)], [("t", 0)], [("t", 1)], [("d", 0)]], [[("t", -1)], [("t", -1)], [("t", 0)], [("d", 0)]]]
-front_house_drop_path = [[[("t", -1)], [("t", 1)], [("d", 0)]], [[("t", 1)], [("t", 0)], [("t", -1)], [("d", 0)]]]
-warehouse_drop_path = [[[("t", 1)], [("t", 0)], [("t", 1)], [("t", 0)], [("t", 0)], [("d", 0)]], [[("t", -1)], [("t", -1)], [("t", 0)], [("t", 0)], [("d", 0)]]]
-factory_drop_path = [[[("t", -1)], [("t", -1)], [("t", 1)], [("t", 0)], [("d", 0)]], [[("t", -1)], [("t", 1)], [("t", 0)], [("t", -1)], [("t", 0)], [("d", 0)]]]
-red_drop_blue_drop_path = [[("t", -1)], [("t", 0)], [("t", 0)], [("t", -1)], [("d", 0)]]
-blue_drop_red_drop_path = [[("t", 1)], [("t", 0)], [("t", 0)], [("t", 1)], [("d", 0)]]
-
-# return drop paths
-red_drop_warehouse_path = reverse_turns_strip(warehouse_drop_path[0]) + [[("p", 0)]]
-red_drop_warehouse_path[-2] += [("l", 0), ("s", front_house_time)]
-red_drop_factory_path = reverse_turns_strip(factory_drop_path[0]) + [[("p", 0)]]
-red_drop_factory_path[-2] += [("l", 0), ("s", back_house_time)]
-red_drop_front_house_path = reverse_turns_strip(front_house_drop_path[0]) + [[("p", 0)]]
-red_drop_front_house_path[-2] += [("l", 0), ("s", warehouse_time)]
-red_drop_back_house_path = reverse_turns_strip(back_house_drop_path[0]) + [[("p", 0)]]
-red_drop_back_house_path[-2] += [("l", 0), ("s", factory_time)]
-
-blue_drop_warehouse_path = reverse_turns_strip(warehouse_drop_path[1]) + [[("p", 0)]]
-blue_drop_warehouse_path[-2] += [("l", 0), ("s", front_house_time)] 
-blue_drop_factory_path = reverse_turns_strip(factory_drop_path[1]) + [[("p", 0)]]
-blue_drop_factory_path[-2] += [("l", 0), ("s", back_house_time)] 
-blue_drop_front_house_path = reverse_turns_strip(front_house_drop_path[1]) + [[("p", 0)]]
-blue_drop_front_house_path[-2] += [("l", 0), ("s", warehouse_time)] 
-blue_drop_back_house_path = reverse_turns_strip(back_house_drop_path[1]) + [[("p", 0)]]
-blue_drop_back_house_path[-2] += [("l", 0), ("s", factory_time)] 
-
-# between
-front_house_back_house_path = [[("t", -1)], [("t", -1)], [("t", -1)], [("t", 0)], [("t", 1), ("l", 0)], [("p", 0)]]
-front_house_factory_path = [[("t", -1)], [("t", -1)], [("t", -1)], [("t", 1)], [("t", 1), ("l", 0)], [("p", 0)]]
-front_house_warehouse_path = [[("t", -1)], [("t", -1)], [("t", 0)], [("t", -1)], [("t", 0)], [("t", -1), ("l", 0)], [("p", 0)]]
-
-back_house_front_house_path = reverse_turns_strip(front_house_back_house_path) + [[("p", 0)]]
-back_house_front_house_path[-2] += [("l", 0), ("s", front_house_time)]
-back_house_factory_path = [[("t", 1)], [("t", -1)], [("t", 1), ("l", 0)], [("p", 0)]]
-back_house_warehouse_path = [[("t", 1)], [("t", -1)], [("t", 0)], [("t", -1)], [("t", -1), ("l", 0)], [("p", 0)]]
-
-factory_front_house_path = reverse_turns_strip(front_house_factory_path) + [[("p", 0)]]
-factory_front_house_path[-2] += [("l", 0), ("s", front_house_time)]
-factory_back_house_path = reverse_turns_strip(back_house_factory_path) + [[("p", 0)]]
-factory_back_house_path[-2] += [("l", 0), ("s", front_house_time)]
-factory_warehouse_path = [[("t", 1)], [("t", -1)], [("t", -1), ("l", 0)], [("p", 0)]]
-
-warehouse_front_house_path = reverse_turns_strip(front_house_warehouse_path) + [[("p", 0)]]
-warehouse_front_house_path[-2] += [("l", 0), ("s", front_house_time)]
-warehouse_back_house_path = reverse_turns_strip(back_house_warehouse_path) + [[("p", 0)]]
-warehouse_back_house_path[-2] += [("l", 0), ("s", front_house_time)]
-warehouse_factory_path = reverse_turns_strip(factory_warehouse_path) + [[("p", 0)]]
-warehouse_factory_path[-2] += [("l", 0), ("s", front_house_time)]
-
 # position in path list
 pos = 0
 # position on board
@@ -126,13 +53,12 @@ v_f = 0.9
 button = DigitalInput(8)
 MODE = 1
 driving = False
-auto_junction = True
 
 def begin(p=0):
     sleep(2.0)
     global MODE
     MODE = 1
-    
+
 def stop(p=0):
     global MODE
     MODE = 5
@@ -148,7 +74,6 @@ if MODE == 1:
     sensor2 = DigitalInput(10)
     sensor3 = DigitalInput(11)
     sensor4 = DigitalInput(12)
-    led.on()
     # list of blocks on the rack
     # -1 for unknown, 0 for red, 1 for blue
     blocks = []
@@ -161,17 +86,18 @@ if MODE == 1:
     # weights matrix from floyds, needs updating
     weights = [[0, 284, 389, 52, 300, 0, 0], [304, 0, 179, 336, 188, 0, 0], [320, 179, 0, 347, 40, 0, 0], [52, 316, 357, 0, 332, 0, 0], [300, 168, 111, 332, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0]]
     test_path = ["front_house", "factory", "red_drop"]
+    #test_path = []
     
     sleep(2)
     
     while True:
         if driving == False:
+            print("Location is", location)
             pos = 0
             print("Getting path")
             if len(test_path) > 0:
                 if test_location == 0:
                     next_location = "front_house"
-                    path = front_house_start_path
                     test_location = 1
                 else:
                     location = test_path[test_location - 1]
@@ -179,15 +105,14 @@ if MODE == 1:
                     test_location += 1
                 if test_location == len(test_path):
                     tank.stop()
+                    print("Finished test path")
+                    break
                 print("Using test path")
                 driving = True
             
             else:
-                pos = 0
-
                 if location == "start":
                     next_location = "front_house"
-                    path = front_house_start_path
 
                 if len(blocks) == max_blocks:
                     if 0 in blocks:
@@ -202,91 +127,22 @@ if MODE == 1:
                             servo.slow_set_position(0, servo_step * counter)
                     else:
                         next_location = "blue_drop"
-                        
-            if location == "warehouse":
-                if next_location == "factory":
-                    path = warehouse_factory_path
-                if next_location == "front_house":
-                    path = warehouse_front_house_path
-                if next_location == "back_house":
-                    path = warehouse_back_house_path
-                if next_location == "red_drop":
-                    path = warehouse_drop_path[0]
-                if next_location == "blue_drop":
-                    path = warehouse_drop_path[1]
 
-            if location == "factory":
-                if next_location == "warehouse":
-                    path = factory_warehouse_path
-                if next_location == "front_house":
-                    path = factory_front_house_path
-                if next_location == "back_house":
-                    path = factory_back_house_path
-                if next_location == "red_drop":
-                    path = factory_drop_path[0]
-                if next_location == "blue_drop":
-                    path = factory_drop_path[1]
+            path = get_path(location, next_location)
 
-            if location == "front_house":
-                if next_location == "warehouse":
-                    path = front_house_warehouse_path
-                if next_location == "factory":
-                    path = front_house_factory_path
-                if next_location == "back_house":
-                    path = front_house_back_house_path
-                if next_location == "red_drop":
-                    path = front_house_drop_path[0]
-                if next_location == "blue_drop":
-                    path = front_house_drop_path[1]
-
-            if location == "back_house":
-                if next_location == "warehouse":
-                    path = back_house_warehouse_path
-                if next_location == "factory":
-                    path = back_house_factory_path
-                if next_location == "front_house":
-                    path = back_house_factory_path
-                if next_location == "red_drop":
-                    path = back_house_drop_path[0]
-                if next_location == "blue_drop":
-                    path = back_house_drop_path[1]
-
-            if location == "red_drop":
-                if next_location == "warehouse":
-                    path = red_drop_warehouse_path
-                if next_location == "factory":
-                    path = red_drop_factory_path
-                if next_location == "front_house":
-                    path = red_drop_front_house_path
-                if next_location == "back_house":
-                    path = red_drop_back_house_path
-                if next_location == "blue_drop":
-                    path = red_drop_blue_drop_path
-
-            if location == "blue_drop":
-                if next_location == "warehouse":
-                    path = blue_drop_warehouse_path
-                if next_location == "factory":
-                    path = blue_drop_factory_path
-                if next_location == "front_house":
-                    path = blue_drop_factory_path
-                if next_location == "back_house":
-                    path = blue_drop_factory_path
-                if next_location == "red_drop":
-                    path = blue_drop_red_drop_path
-
-                driving = True
-                location = next_location
+            driving = True
+            location = next_location
 
         if driving == True:
             counter = 0
-            while sensor1.value() == 0 and sensor4.value() == 0 and counter != ttl and not auto_junction:
+            while sensor1.value() == 0 and sensor4.value() == 0 and counter != ttl and not AUTO_JUNCTION:
                 v_r = -0.017 * (sensor2.value() - sensor3.value())
                 if LOG_POSITION:
                     print("pos:", tank.tick(dt))
                 tank.drive(v_f, v_r)
                 sleep(dt)
                 counter += 1
+            led.on()
             tank.log_sleep(dt)
             new_scheduled_extra = list()
             ttl = -1
@@ -298,11 +154,9 @@ if MODE == 1:
                     tank.log_sleep(0.1)
                     if value > 0:
                         tank.spin(value * 0.9)
-                        print("Spinning")
                         tank.log_sleep(0.6)
                     if value < 0:
                         tank.spin(value * 0.9)
-                        print("Spinning")
                         tank.log_sleep(0.85)
                     else:
                         tank.log_sleep(0.3)
@@ -321,13 +175,12 @@ if MODE == 1:
                     actuator.extend_to(0)
                 elif command == "s":
                     ttl = int(value / dt)
-                    print("ran")
                 elif command == "p" or command == "d":
                     if command == "p":
                         print("picking")
                         tank.stop()
                         actuator.extend_to(0.15)
-                        sleep(10)
+                        sleep(1)
                         servo.slow_set_position(0, 2 / 3)
                         active_block = 1 - active_block
                         #new_scheduled_extra.append(("c", 0))
@@ -350,7 +203,7 @@ if MODE == 1:
             pos += 1
             if pos == len(path):
                 driving = False
-                pos = 0
+    led.off()
     while True:
         pass
     
