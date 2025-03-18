@@ -156,9 +156,11 @@ class Servo:
 
         def advance_position(t):
             global i
-            self.set_position(self.position + (i / increments) * delta)
-            i += 1
-            if i == increments:
+            if i < (increments - 1):
+                self.set_position(start_position + (i / increments) * delta)
+                i += 1
+            else:
+                self.set_position(target_position)
                 t.deinit()
 
         timer = Timer()

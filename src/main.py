@@ -45,8 +45,9 @@ global MODE
 # position on board
 location = "start"
 
-dt = 0.07
-v_f = 0.9
+dt = 0.05
+v_f_0, v_f_a = 0.9, 0.6
+k_p_0, k_p_a = -0.017, -0.03
 button = DigitalInput(8)
 MODE = 1
 
@@ -64,7 +65,9 @@ def stop(p=None):
 while True:
     full_route_step = 0
     path_step = 0
-    STOP = False
+    STOP = True
+
+    servo.set_position(0.35)
 
     button.bind_interupt(begin, 1)
     while STOP:
@@ -76,10 +79,19 @@ while True:
         sensor1, sensor2, sensor3, sensor4 = DigitalInput(9), DigitalInput(10), DigitalInput(11), DigitalInput(12)
         # list of blocks on the rack: -1 for unknown, 0 for red, 1 for blue
         blocks, active_block, max_blocks, delivered = [], 0, 2, [0, 0]
-        servo_step = 2/3
+        servo_positions = [0.02, 0.74]
         scheduled_extra = list()
-        ttl = -1
         driving = False
+        v_f, k_p, ttl = v_f_0, k_p_0, -1
+        init_driving_config = True
+        
+        global detected_junction, enable_junction_detection
+        detected_junction = False
+        def notify_junction(p=None):
+            global detected_junction, enable_junction_detection
+            detected_junction = enable_junction_detection
+        sensor1.bind_interupt(notify_junction, 1)
+        sensor4.bind_interupt(notify_junction, 1)
 
         full_route = ["front_house", "factory", "back_house", "warehouse", "start"]
 
@@ -98,7 +110,7 @@ while True:
                                     counter += 1
                                 else:
                                     break
-                            servo.slow_set_position(servo_step * counter)
+                            servo.slow_set_position(servo_positions[counter])
                             active_block = counter
                     else:
                         next_location = "blue_drop"
@@ -119,18 +131,20 @@ while True:
             else:
                 if STOP:
                     break
-                counter = 0
-                while sensor1.value() == 0 and sensor4.value() == 0 and counter != ttl and not AUTO_JUNCTION:
-                    v_r = -0.017 * (sensor2.value() - sensor3.value())
-                    if LOG_POSITION:
-                        print("pos:", tank.tick(dt))
+                counter, enable_junction_detection = 0, True
+                while not detected_junction and counter != ttl and not AUTO_JUNCTION:
+                    v_r = k_p * (sensor2.value() - sensor3.value())
+                    tank.log_tick(dt)
                     tank.drive(v_f, v_r)
                     sleep(dt)
                     counter += 1
-                led.on()
+                detected_junction, enable_junction_detection = False, False
+                if init_driving_config:
+                    servo.set_position(0.02)
+                    led.on()
+                    init_driving_config = False
                 tank.log_sleep(dt)
-                new_scheduled_extra = list()
-                ttl = -1
+                new_scheduled_extra, v_f, k_p, ttl = list(), v_f_0, k_p_0, -1
                 for instruction in path[path_step] + scheduled_extra:
                     command = instruction[0]
                     value = instruction[1]
@@ -139,7 +153,7 @@ while True:
                         tank.log_sleep(0.1)
                         if value > 0:
                             tank.spin(value * 0.9)
-                            tank.log_sleep(0.6)
+                            tank.log_sleep(0.55)
                         if value < 0:
                             tank.spin(value * 0.9)
                             tank.log_sleep(0.85)
@@ -159,6 +173,8 @@ while True:
                             blocks[-1] = 1
                     elif command == "l":
                         actuator.extend_to(0)
+                    elif command == "a":
+                        v_f, k_p = v_f_a, k_p_a
                     elif command == "s":
                         ttl = int(value / dt)
                     elif command == "p" or command == "d":
@@ -169,23 +185,25 @@ while True:
                             sleep(1)
                             blocks.append(-1)
                             active_block = (active_block + 1) % max_blocks
-                            servo.slow_set_position(servo_step * len(blocks))
+                            servo.slow_set_position(servo_positions[active_block])
                             new_scheduled_extra.append(("c", 0))
                         else:
                             target_id = 0 if location == "red_drop" else 1
-                            t0, tr, initial = 2, 1, True
+                            t0, tr, initial = 1.4, 0.7, True
                             while target_id in blocks:
+                                print(blocks)
+                                print(target_id)
                                 if initial:
                                     print("Dropping first block")
                                     t_forward = t0 - (tr * delivered[target_id])
-                                    tank.drive(v_f)
+                                    tank.drive(v_f_a)
                                     tank.log_sleep(t_forward)
                                     tank.stop()
                                     blocks[active_block] = None
                                     initial = False
                                 else:
                                     print("Dropping subsequent block")
-                                    tank.drive(-v_f)
+                                    tank.drive(-v_f_a)
                                     tank.log_sleep(tr)
                                     tank.stop()
                                     actuator.extend_to(0.1)
@@ -195,24 +213,23 @@ while True:
                                             counter += 1
                                         else:
                                             break
-                                    servo.slow_set_position(servo_step * counter)
+                                    servo.slow_set_position(servo_positions[counter])
                                     blocks[counter] = None
                                     sleep(5)
                                 actuator.extend_to(0)
                                 delivered[target_id] += 1
                                 sleep(1)
                             blocks = list()
-                        tank.drive(-v_f)
-                        tank.log_sleep(0.7)
+                        tank.drive(-v_f_a)
+                        tank.log_sleep(0.35)
                         tank.stop()
                         sleep(0.3)
                         tank.spin(1)
                         tank.log_sleep(1.5)
                         tank.stop()
                         if command == "d":
-                            servo.set_position(0)
+                            servo.set_position(servo_positions[0])
                             active_block = 0
-                    sleep(0.3)
                 tank.drive(v_f)
                 scheduled_extra = new_scheduled_extra
                 path_step += 1

@@ -12,10 +12,10 @@ def reverse_turns_strip(path):
     return turns
 
 
-front_house_time = 2
-back_house_time = 2
-factory_time = 2
-warehouse_time = 2
+front_house_time = 1.7
+back_house_time = 1.5
+factory_time = 1.7
+warehouse_time = 1.5
 
 end_time = 2
 
@@ -23,7 +23,7 @@ end_time = 2
 test_path = [[("p", 0)], [("p", 0)], [("p", 0)], [("p", 0)], [("p", 0)], [("p", 0)], [("p", 0)]]
 
 # start
-start_front_house_path = [[("t", 0)], [("t", 1)], [("t", -1), ("l", 0), ("s", front_house_time)], [("p", 0)]]
+start_front_house_path = [[("t", 0)], [("t", 1)], [("t", -1), ("l", 0), ("a", 0), ("s", front_house_time)], [("p", 0)]]
 
 # [0] drop red, [1] drop blue
 back_house_drop_path = [[[("t", -1)], [("t", -1)], [("t", -1)], [("t", 0)], [("t", 0)], [("t", 1)], [("d", 0)]], [[("t", -1)], [("t", -1)], [("t", 0)], [("d", 0)]]]
@@ -35,49 +35,49 @@ blue_drop_red_drop_path = [[("t", 1)], [("t", 0)], [("t", 0)], [("t", 1)], [("d"
 
 # return drop paths
 red_drop_front_house_path = reverse_turns_strip(front_house_drop_path[0]) + [[("p", 0)]]
-red_drop_front_house_path[-2] += [("l", 0), ("s", front_house_time)]
+red_drop_front_house_path[-2] += [("l", 0), ("a", 0), ("s", front_house_time)]
 red_drop_back_house_path = reverse_turns_strip(back_house_drop_path[0]) + [[("p", 0)]]
-red_drop_back_house_path[-2] += [("l", 0), ("s", back_house_time)]
+red_drop_back_house_path[-2] += [("l", 0), ("a", 0), ("s", back_house_time)]
 red_drop_factory_path = reverse_turns_strip(factory_drop_path[0]) + [[("p", 0)]]
-red_drop_factory_path[-2] += [("l", 0), ("s", factory_time)]
+red_drop_factory_path[-2] += [("l", 0), ("a", 0), ("s", factory_time)]
 red_drop_warehouse_path = reverse_turns_strip(warehouse_drop_path[0]) + [[("p", 0)]]
-red_drop_warehouse_path[-2] += [("l", 0), ("s", warehouse_time)]
+red_drop_warehouse_path[-2] += [("l", 0), ("a", 0), ("s", warehouse_time)]
 red_drop_start_path = [[("t", -1)], [("t", 0)], [("t", -1)], [("l", end_time)]]
 
 
 blue_drop_front_house_path = reverse_turns_strip(front_house_drop_path[1]) + [[("p", 0)]]
-blue_drop_front_house_path[-2] += [("l", 0), ("s", front_house_time)]
+blue_drop_front_house_path[-2] += [("l", 0), ("a", 0), ("s", front_house_time)]
 blue_drop_back_house_path = reverse_turns_strip(back_house_drop_path[1]) + [[("p", 0)]]
-blue_drop_back_house_path[-2] += [("l", 0), ("s", back_house_time)]
+blue_drop_back_house_path[-2] += [("l", 0), ("a", 0), ("s", back_house_time)]
 blue_drop_factory_path = reverse_turns_strip(factory_drop_path[1]) + [[("p", 0)]]
-blue_drop_factory_path[-2] += [("l", 0), ("s", factory_time)]
+blue_drop_factory_path[-2] += [("l", 0), ("a", 0), ("s", factory_time)]
 blue_drop_warehouse_path = reverse_turns_strip(warehouse_drop_path[1]) + [[("p", 0)]]
-blue_drop_warehouse_path[-2] += [("l", 0), ("s", warehouse_time)]
+blue_drop_warehouse_path[-2] += [("l", 0), ("a", 0), ("s", warehouse_time)]
 blue_drop_start_path = [[("t", 1)], [("t", 1)], [("l", end_time)]]
 
 
 # between
-front_house_back_house_path = [[("t", -1)], [("t", -1)], [("t", -1)], [("t", 0)], [("t", 1), ("l", 0)], [("p", 0)]]
-front_house_factory_path = [[("t", -1)], [("t", -1)], [("t", -1)], [("t", 1)], [("t", 1), ("l", 0)], [("p", 0)]]
-front_house_warehouse_path = [[("t", -1)], [("t", -1)], [("t", 0)], [("t", -1)], [("t", 0)], [("t", -1), ("l", 0)], [("p", 0)]]
+front_house_back_house_path = [[("t", -1)], [("t", -1)], [("t", -1)], [("t", 0)], [("t", 1), ("l", 0), ("a", 0), ("s", back_house_time)], [("p", 0)]]
+front_house_factory_path = [[("t", -1)], [("t", -1)], [("t", -1)], [("t", 1)], [("t", 1), ("l", 0), ("a", 0), ("s", factory_time)], [("p", 0)]]
+front_house_warehouse_path = [[("t", -1)], [("t", -1)], [("t", 0)], [("t", -1)], [("t", 0)], [("t", -1), ("l", 0), ("a", 0), ("s", warehouse_time)], [("p", 0)]]
 
 back_house_front_house_path = reverse_turns_strip(front_house_back_house_path) + [[("p", 0)]]
-back_house_front_house_path[-2] += [("l", 0), ("s", front_house_time)]
-back_house_factory_path = [[("t", 1)], [("t", -1)], [("t", 1), ("l", 0)], [("p", 0)]]
-back_house_warehouse_path = [[("t", 1)], [("t", -1)], [("t", 0)], [("t", -1)], [("t", -1), ("l", 0)], [("p", 0)]]
+back_house_front_house_path[-2] += [("l", 0), ("a", 0), ("s", front_house_time)]
+back_house_factory_path = [[("t", 1)], [("t", -1)], [("t", 1), ("l", 0), ("a", 0), ("s", factory_time)], [("p", 0)]]
+back_house_warehouse_path = [[("t", 1)], [("t", -1)], [("t", 0)], [("t", -1)], [("t", -1), ("l", 0), ("a", 0), ("s", factory_time)], [("p", 0)]]
 
 factory_front_house_path = reverse_turns_strip(front_house_factory_path) + [[("p", 0)]]
-factory_front_house_path[-2] += [("l", 0), ("s", front_house_time)]
+factory_front_house_path[-2] += [("l", 0), ("a", 0), ("s", front_house_time)]
 factory_back_house_path = reverse_turns_strip(back_house_factory_path) + [[("p", 0)]]
-factory_back_house_path[-2] += [("l", 0), ("s", back_house_time)]
-factory_warehouse_path = [[("t", 1)], [("t", -1)], [("t", -1), ("l", 0)], [("p", 0)]]
+factory_back_house_path[-2] += [("l", 0), ("a", 0), ("s", back_house_time)]
+factory_warehouse_path = [[("t", 1)], [("t", -1)], [("t", -1), ("l", 0), ("a", 0), ("s", warehouse_time)], [("p", 0)]]
 
 warehouse_front_house_path = reverse_turns_strip(front_house_warehouse_path) + [[("p", 0)]]
-warehouse_front_house_path[-2] += [("l", 0), ("s", front_house_time)]
+warehouse_front_house_path[-2] += [("l", 0), ("a", 0), ("s", front_house_time)]
 warehouse_back_house_path = reverse_turns_strip(back_house_warehouse_path) + [[("p", 0)]]
-warehouse_back_house_path[-2] += [("l", 0), ("s", back_house_time)]
+warehouse_back_house_path[-2] += [("l", 0), ("a", 0), ("s", back_house_time)]
 warehouse_factory_path = reverse_turns_strip(factory_warehouse_path) + [[("p", 0)]]
-warehouse_factory_path[-2] += [("l", 0), ("s", factory_time)]
+warehouse_factory_path[-2] += [("l", 0), ("a", 0), ("s", factory_time)]
 
 
 def get_path(location, next_location):
