@@ -146,15 +146,17 @@ class Servo:
         half_duty = int(max_duty/2)
         grad = max_duty - min_duty
         self.pwm_pin.duty_u16(min_duty + int(grad * position))
-    def slow_set_position(self, start_pos, position, increments=30, time=5):
+        self.position = position
+    def slow_set_position(self, target_position, increments=30, time=5):
         frequency = increments / time
-        delta = position - start_pos
+        start_position = self.position
+        delta = target_position - start_position
         global i
         i = 0
 
         def advance_position(t):
             global i
-            self.set_position(start_pos + (i / increments) * delta)
+            self.set_position(self.position + (i / increments) * delta)
             i += 1
             if i == increments:
                 t.deinit()
