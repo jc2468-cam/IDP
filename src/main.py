@@ -1,11 +1,9 @@
 from config import *
 from machine import I2C
-from interface.ranging import *
 
 from interface.interface import *
 from interface.base_output import *
 from calibrations import *
-from interface.linefollowing import LineSensor
 from interface.pathing import *
 
 from utime import sleep, ticks_ms
