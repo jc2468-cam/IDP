@@ -147,7 +147,7 @@ class Servo:
         grad = max_duty - min_duty
         self.pwm_pin.duty_u16(min_duty + int(grad * position))
         self.position = position
-    def slow_set_position(self, target_position, increments=30, time=5):
+    def slow_set_position(self, target_position, increments=30, time=2):
         frequency = increments / time
         start_position = self.position
         delta = target_position - start_position

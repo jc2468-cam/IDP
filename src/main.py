@@ -42,12 +42,10 @@ led.off()
 
 global MODE
 
-# position on board
-location = "start"
-
 dt = 0.05
 v_f_0, v_f_a = 0.9, 0.6
 k_p_0, k_p_a = -0.017, -0.03
+servo_horizontal_pos = 0.35
 button = DigitalInput(8)
 MODE = 1
 
@@ -67,7 +65,7 @@ while True:
     path_step = 0
     STOP = True
 
-    servo.set_position(0.35)
+    servo.set_position(servo_horizontal_pos)
 
     button.bind_interupt(begin, 1)
     while STOP:
@@ -79,11 +77,13 @@ while True:
         sensor1, sensor2, sensor3, sensor4 = DigitalInput(9), DigitalInput(10), DigitalInput(11), DigitalInput(12)
         # list of blocks on the rack: -1 for unknown, 0 for red, 1 for blue
         blocks, active_block, max_blocks, delivered = [], 0, 2, [0, 0]
-        servo_positions = [0.02, 0.74]
+        servo_positions = [0.01, 0.72]
         scheduled_extra = list()
         driving = False
         v_f, k_p, ttl = v_f_0, k_p_0, -1
         init_driving_config = True
+        
+        turn_times = [0.8, 0.85]
         
         global detected_junction, enable_junction_detection
         detected_junction = False
@@ -92,8 +92,12 @@ while True:
             detected_junction = enable_junction_detection
         sensor1.bind_interupt(notify_junction, 1)
         sensor4.bind_interupt(notify_junction, 1)
-
+        
+        # position on board
+        location = "start"
         full_route = ["front_house", "factory", "back_house", "warehouse", "start"]
+        #location = "back_house"
+        #full_route = ["warehouse", "blue_drop", "back_house"]
 
         while True:
             if not driving:
@@ -145,20 +149,19 @@ while True:
                     init_driving_config = False
                 tank.log_sleep(dt)
                 new_scheduled_extra, v_f, k_p, ttl = list(), v_f_0, k_p_0, -1
-                for instruction in path[path_step] + scheduled_extra:
+                all_instructions = path[path_step] + scheduled_extra
+                for instruction in all_instructions:
                     command = instruction[0]
                     value = instruction[1]
                     print("Junction Detected", command, value)
                     if command == "t":
                         tank.log_sleep(0.1)
-                        if value > 0:
+                        if value == 2:
+                            tank.spin(1)
+                            tank.log_sleep(1.5)
+                        elif value != 0:
                             tank.spin(value * 0.9)
-                            tank.log_sleep(0.55)
-                        if value < 0:
-                            tank.spin(value * 0.9)
-                            tank.log_sleep(0.85)
-                        else:
-                            tank.log_sleep(0.3)
+                            tank.log_sleep(turn_times[0 if value > 0 else 1])
                         tank.stop()
                     elif command == "c":
                         # print('raw: {}'.format(tcs.read('raw')))
@@ -177,6 +180,13 @@ while True:
                         v_f, k_p = v_f_a, k_p_a
                     elif command == "s":
                         ttl = int(value / dt)
+                    elif command == "h" or (command == "uh" and not ("h" in all_instructions)):
+                        target = servo_horizontal_pos if command == "h" else servo_positions[active_block]
+                        #def to_horizontal(t=None):
+                        timer = Timer()
+                        timer.init(mode=Timer.ONE_SHOT, period=int(value * 1000), callback=lambda t: servo.slow_set_position(target))
+                        if command == "h":
+                            new_scheduled_extra.append(("uh", 0.5))
                     elif command == "p" or command == "d":
                         if command == "p":
                             print("picking")
@@ -189,7 +199,7 @@ while True:
                             new_scheduled_extra.append(("c", 0))
                         else:
                             target_id = 0 if location == "red_drop" else 1
-                            t0, tr, initial = 1.4, 0.7, True
+                            t0, tr, initial = 1.2, 1.7, True
                             while target_id in blocks:
                                 print(blocks)
                                 print(target_id)
@@ -221,11 +231,9 @@ while True:
                                 sleep(1)
                             blocks = list()
                         tank.drive(-v_f_a)
-                        tank.log_sleep(0.35)
+                        tank.log_sleep(value)
                         tank.stop()
-                        sleep(0.3)
-                        tank.spin(1)
-                        tank.log_sleep(1.5)
+                        sleep(0.1)
                         tank.stop()
                         if command == "d":
                             servo.set_position(servo_positions[0])
