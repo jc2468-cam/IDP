@@ -30,9 +30,9 @@ tank.stop()
 actuator = Actuator(0)
 servo = Servo(0)
 
-i2c_bus = I2C(0, sda=Pin(16), scl=Pin(17))
+#i2c_bus = I2C(0, sda=Pin(16), scl=Pin(17))
 #print(i2c_bus.scan())
-tcs = TCS34725(i2c_bus)
+#tcs = TCS34725(i2c_bus)
 
 led = Led(28)
 led.off()
@@ -41,7 +41,7 @@ led.off()
 global MODE
 
 dt = 0.07
-v_f_0, v_f_a = 0.9, 0.8
+v_f_0, v_f_a = 0.9, 0.5
 k_p_0, k_p_a = -0.017, -0.03
 servo_horizontal_pos = 0.35
 button = DigitalInput(8)
@@ -61,7 +61,7 @@ def stop(p=None):
 while True:
     full_route_step = 0
     path_step = 0
-    STOP = True
+    STOP = False
 
     servo.set_position(servo_horizontal_pos)
 
@@ -75,13 +75,13 @@ while True:
         sensor1, sensor2, sensor3, sensor4 = DigitalInput(9), DigitalInput(10), DigitalInput(11), DigitalInput(12)
         # list of blocks on the rack: -1 for unknown, 0 for red, 1 for blue
         blocks, active_block, max_blocks, delivered = [], 0, 2, [0, 0]
-        servo_positions = [0.01, 0.72]
+        servo_pickup_positions, servo_scan_positions = [0.01, 0.72], [0.72, 0.01]
         turn_times = [0.85, 0.9]
         scheduled_extra = list()
         driving, init_driving_config = False, True
         v_f, k_p, ttl = v_f_0, k_p_0, -1
-        reverse_next_turn, reverse_turn_map = False, [1,2,-1]        
-        
+        reverse_next_turn, reverse_turn_map = False, [1,2,-1]
+
         global detected_junction, enable_junction_detection
         detected_junction = False
         def notify_junction(p=None):
@@ -89,7 +89,7 @@ while True:
             detected_junction = enable_junction_detection
         sensor1.bind_interupt(notify_junction, 1)
         sensor4.bind_interupt(notify_junction, 1)
-        
+
         # position on board
         location = "start"
         full_route = ["front_house", "factory", "back_house", "warehouse"]
@@ -111,7 +111,7 @@ while True:
                                     counter += 1
                                 else:
                                     break
-                            servo.slow_set_position(servo_positions[counter])
+                            servo.slow_set_position(servo_pickup_positions[counter])
                             active_block = counter
                     else:
                         next_location = "blue_drop"
@@ -121,8 +121,9 @@ while True:
                             break
                         else:
                             next_location = "start"
-                    next_location = full_route[full_route_step]
-                    full_route_step += 1
+                    else:
+                        next_location = full_route[full_route_step]
+                        full_route_step += 1
 
                 print("Pathing to", next_location)
                 path = get_path(location, next_location)
@@ -164,9 +165,9 @@ while True:
                         tank.stop()
                         reverse_next_turn = False
                     elif command == "c":
-                        print('raw: {}'.format(tcs.read('raw')))
-                        rgb = tcs.read('rgb')
-                        #rgb = (123.2, 13.7, 19.2) if delivered[0] != 2 else (100.1, 100.1, 100.1)
+                        #print('raw: {}'.format(tcs.read('raw')))
+                        #rgb = tcs.read('rgb')
+                        rgb = (123.2, 13.7, 19.2) if delivered[0] != 2 else (100.1, 100.1, 100.1)
                         print("rbg:", rgb)
                         if rgb[0] > 1.5 * rgb[2]:
                             print("Guessed RED")
@@ -176,14 +177,16 @@ while True:
                             blocks[-1] = 1
                     elif command == "l":
                         actuator.extend_to(0)
-                        sleep(0.5)
+                        sleep(value)
                     elif command == "a":
                         v_f, k_p = v_f_a, k_p_a
                     elif command == "s":
                         ttl = int(value / dt)
+                    elif command == "n":
+                        ttl = 0
+                        servo.await_spinning()
                     elif command == "h" or (command == "uh" and not ("h" in all_instructions)):
-                        target = servo_horizontal_pos if command == "h" else servo_positions[active_block]
-                        #def to_horizontal(t=None):
+                        target = servo_horizontal_pos if command == "h" else servo_pickup_positions[active_block]
                         timer = Timer()
                         timer.init(mode=Timer.ONE_SHOT, period=int(value * 1000), callback=lambda t: servo.slow_set_position(target))
                         if command == "h":
@@ -194,17 +197,19 @@ while True:
                             tank.stop()
                             actuator.extend_to(0.15)
                             sleep(1)
+                            if SHAKE_SERVO:
+                                intermediate_pos = servo_pickup_positions[active_block] + 0.75 * (servo_scan_positions[active_block] - servo_pickup_positions[active_block])
+                                timer_queue([(lambda x: servo.slow_set_position(intermediate_pos), 2.0), (lambda x: servo.shake(), 1.0), (lambda x: servo.slow_set_position(servo_scan_positions[active_block]), None)])
+                            else:
+                                servo.slow_set_position(servo_scan_positions[active_block])
                             blocks.append(-1)
                             active_block = (active_block + 1) % max_blocks
-                            servo.slow_set_position(servo_positions[active_block])
                             sleep(0.3)
-                            new_scheduled_extra.append(("c", 0))
+                            new_scheduled_extra.extend([("c", 0), ("uh", 0.5)])
                         else:
                             target_id = 0 if location == "red_drop" else 1
                             t0, tr, initial = 1.2, 1.7, True
                             while target_id in blocks:
-                                print(blocks)
-                                print(target_id)
                                 if initial:
                                     print("Dropping first block")
                                     t_forward = t0 - (tr * delivered[target_id])
@@ -225,7 +230,7 @@ while True:
                                             counter += 1
                                         else:
                                             break
-                                    servo.slow_set_position(servo_positions[counter])
+                                    servo.slow_set_position(servo_pickup_positions[counter])
                                     blocks[counter] = None
                                     sleep(5)
                                 actuator.extend_to(0)
@@ -239,8 +244,9 @@ while True:
                         tank.stop()
                         reverse_next_turn = True
                         if command == "d":
-                            servo.set_position(servo_positions[0])
+                            servo.set_position(servo_pickup_positions[0])
                             active_block = 0
+                        path.append([("n", 0)])
                 tank.drive(v_f)
                 scheduled_extra = new_scheduled_extra
                 path_step += 1

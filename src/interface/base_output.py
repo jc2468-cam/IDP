@@ -138,6 +138,7 @@ class Servo:
         self.pwm_pin = PWM(Pin(15 if m_id == 0 else 13))
         self.pwm_pin.freq(50)
         self.m_id = 0
+        self.spinning = False
         self.set_position(initial_pos)
     @telemetry_out(lambda self, position: f"Servo::set_position({self.m_id}, {position})")
     def set_position(self, position):
@@ -151,17 +152,41 @@ class Servo:
         frequency = increments / time
         start_position = self.position
         delta = target_position - start_position
-        global i
-        i = 0
+        global slow_set_i
+        slow_set_i = 0
 
         def advance_position(t):
-            global i
-            if i < (increments - 1):
-                self.set_position(start_position + (i / increments) * delta)
-                i += 1
+            global slow_set_i
+            if slow_set_i < increments:
+                self.set_position(start_position + (slow_set_i / increments) * delta)
+                slow_set_i += 1
             else:
                 self.set_position(target_position)
+                self.spinning = False
                 t.deinit()
 
         timer = Timer()
         timer.init(freq=frequency, mode=Timer.PERIODIC, callback=advance_position)
+        self.spinning = True
+    def await_spinning(self, dt=0.2):
+        while self.spinning:
+            sleep(dt)
+    def shake(self, ampliude=0.075, frequency=4, time=1.0):
+        initial_position = self.position
+        shake_steps = int(time / freq)
+        global shake_i
+        shake_i = 0
+
+        def shake_step(t):
+            global shake_i
+            if shake_i < shake_steps:
+                self.set_position(self.position + ampliude if (shake_i & 1) == 0 else -ampliude)
+                shake_i += 1
+            else:
+                self.set_position(initial_position)
+                self.spinning = False
+                t.deinit()
+
+        timer = Timer()
+        timer.init(freq=frequency, mode=Timer.PERIODIC, callback=shake_step)
+        self.spinning = True

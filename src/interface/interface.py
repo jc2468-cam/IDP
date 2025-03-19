@@ -32,7 +32,7 @@ class Tank:
     def run_raw(self, v0, v1):
         self.m0.run(v0)
         self.m1.run(v1)
-    
+
 
 class TrackedTank:
     def __init__(self, m0, m1, axle_length, wheel_diam):
@@ -47,7 +47,7 @@ class TrackedTank:
         cal_v1 = 0.0 if abs(v1) < MOTOR_CAL_T else MOTOR_CAL_M * v1 + MOTOR_CAL_C
         cal_v_f, cal_v_r = 0.5 * (cal_v0 + cal_v1), 0.5 * (cal_v0 - cal_v1) / self.inner.axle_rad
         self.motion = [cal_v_f, cal_v_r]
-    def drive(self, v_f, v_r=0, t=0):
+    def drive(self, v_f, v_r=0.0, t=0):
         """makes the tank drive at a forward speed v_f and in an arc at speed v_r
         If 2 arguments passed, take them to be v_r and t."""
         if t != 0:
@@ -79,7 +79,7 @@ class TrackedTank:
         return self.pos
     def log_tick(self, time):
         if LOG_POSITION:
-            print("pos:", tank.tick(time))
+            print("pos:", self.tick(time))
     def log_sleep(self, time):
         sleep(time)
         self.log_tick(time)
@@ -88,3 +88,11 @@ class TrackedTank:
         (x, y, radial, time)"""
         return self.pos
 
+def timer_queue(commands):
+    callbacks = list()
+    for (i, command) in commands[:-1]:
+        def inner(t):
+            command[0]()
+            t.init(mode=Timer.ONE_SHOT, period=int(command[1] * 1000), callback=callbacks[i+1])
+        callbacks.append(inner)
+    callbacks.append(commands[-1][0])
