@@ -30,9 +30,9 @@ tank.stop()
 actuator = Actuator(0)
 servo = Servo(0)
 
-#i2c_bus = I2C(0, sda=Pin(16), scl=Pin(17))
-# print(i2c_bus.scan())
-#tcs = TCS34725(i2c_bus)
+i2c_bus = I2C(0, sda=Pin(16), scl=Pin(17))
+#print(i2c_bus.scan())
+tcs = TCS34725(i2c_bus)
 
 led = Led(28)
 led.off()
@@ -40,8 +40,8 @@ led.off()
 
 global MODE
 
-dt = 0.05
-v_f_0, v_f_a = 0.9, 0.6
+dt = 0.07
+v_f_0, v_f_a = 0.9, 0.8
 k_p_0, k_p_a = -0.017, -0.03
 servo_horizontal_pos = 0.35
 button = DigitalInput(8)
@@ -76,12 +76,11 @@ while True:
         # list of blocks on the rack: -1 for unknown, 0 for red, 1 for blue
         blocks, active_block, max_blocks, delivered = [], 0, 2, [0, 0]
         servo_positions = [0.01, 0.72]
+        turn_times = [0.85, 0.9]
         scheduled_extra = list()
-        driving = False
+        driving, init_driving_config = False, True
         v_f, k_p, ttl = v_f_0, k_p_0, -1
-        init_driving_config = True
-        
-        turn_times = [0.8, 0.85]
+        reverse_next_turn, reverse_turn_map = False, [1,2,-1]        
         
         global detected_junction, enable_junction_detection
         detected_junction = False
@@ -93,7 +92,7 @@ while True:
         
         # position on board
         location = "start"
-        full_route = ["front_house", "factory", "back_house", "warehouse", "start"]
+        full_route = ["front_house", "factory", "back_house", "warehouse"]
         #location = "back_house"
         #full_route = ["warehouse", "blue_drop", "back_house"]
 
@@ -140,12 +139,12 @@ while True:
                     tank.drive(v_f, v_r)
                     sleep(dt)
                     counter += 1
-                detected_junction, enable_junction_detection = False, False
                 if init_driving_config:
                     servo.set_position(0.02)
                     led.on()
                     init_driving_config = False
                 tank.log_sleep(dt)
+                detected_junction, enable_junction_detection = False, False
                 new_scheduled_extra, v_f, k_p, ttl = list(), v_f_0, k_p_0, -1
                 all_instructions = path[path_step] + scheduled_extra
                 for instruction in all_instructions:
@@ -154,6 +153,8 @@ while True:
                     print("Junction Detected", command, value)
                     if command == "t":
                         tank.log_sleep(0.1)
+                        if reverse_next_turn:
+                            value = reverse_turn_map[value+1]
                         if value == 2:
                             tank.spin(1)
                             tank.log_sleep(1.5)
@@ -161,10 +162,11 @@ while True:
                             tank.spin(value * 0.9)
                             tank.log_sleep(turn_times[0 if value > 0 else 1])
                         tank.stop()
+                        reverse_next_turn = False
                     elif command == "c":
-                        # print('raw: {}'.format(tcs.read('raw')))
-                        # rgb = tcs.read('rgb')
-                        rgb = (123.2, 13.7, 19.2) if delivered[0] != 2 else (100.1, 100.1, 100.1)
+                        print('raw: {}'.format(tcs.read('raw')))
+                        rgb = tcs.read('rgb')
+                        #rgb = (123.2, 13.7, 19.2) if delivered[0] != 2 else (100.1, 100.1, 100.1)
                         print("rbg:", rgb)
                         if rgb[0] > 1.5 * rgb[2]:
                             print("Guessed RED")
@@ -174,6 +176,7 @@ while True:
                             blocks[-1] = 1
                     elif command == "l":
                         actuator.extend_to(0)
+                        sleep(0.5)
                     elif command == "a":
                         v_f, k_p = v_f_a, k_p_a
                     elif command == "s":
@@ -194,6 +197,7 @@ while True:
                             blocks.append(-1)
                             active_block = (active_block + 1) % max_blocks
                             servo.slow_set_position(servo_positions[active_block])
+                            sleep(0.3)
                             new_scheduled_extra.append(("c", 0))
                         else:
                             target_id = 0 if location == "red_drop" else 1
@@ -233,6 +237,7 @@ while True:
                         tank.stop()
                         sleep(0.1)
                         tank.stop()
+                        reverse_next_turn = True
                         if command == "d":
                             servo.set_position(servo_positions[0])
                             active_block = 0
