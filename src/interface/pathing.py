@@ -1,4 +1,15 @@
 def reverse_turns_strip(path):
+    """Inverts the turn instructions in a path, and removes all other instructions.#
+
+    This allows the path from `B` to `A` to be constructed from the path from `A` to `B`, but non-turn instructions must be added manually
+    (since they are not always symmetrical).
+
+    Arguments:
+        `path` (`list`): The instruction set to reverse.
+
+    Returns:
+        `list`: The turn instructions to path from the destination back to the origin.
+    """
     started = False
     start_i, end_i = 0, 0
     for i in range(len(path)):
@@ -82,6 +93,15 @@ warehouse_factory_path[-2] += [("l", 0.5), ("a", 0), ("s", factory_times[0])]
 
 
 def get_path(location, next_location):
+    """Gets the instruction set to get from `location` to `next_location`, and perform the relevant action upon arriving (e.g. pick up / drop off block(s)).
+
+    Arguments:
+        `location` (`str`): The current location (to path from).
+        `next_locaction`: The desired destination (to path to).
+
+    Returns:
+        `list`: Instructions to execute at each junction to get between locations and perform relevant actions.
+    """
     if location == "start":
         return start_front_house_path
 

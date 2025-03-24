@@ -3,11 +3,17 @@ from config import *
 from utime import sleep
 
 
-def telemetry_out(get_telem_str, supress=True):
+def telemetry_out(get_telem_str, suppress=True):
+    """Outputs a telemetry message over serial to a host computer instead of / as well as performing a function, depending in the config file.
+
+    Arguments:
+        `get_telem_str` (`function`): A function to call (with the arguments passed to the output function) to generate the telemetry message.
+        `suppress` (`bool`): Whether to skip calling this function when 'telemetry only' mode is set in the config file (default `True`).
+    """
     def wrapper(fn):
         if OUTPUT_MODE == 0:
             return fn
-        elif OUTPUT_MODE == 1 and supress:
+        elif OUTPUT_MODE == 1 and suppress:
             return lambda *args: print(get_telem_str(*args))
         else:
             def inner(*args):
@@ -17,6 +23,14 @@ def telemetry_out(get_telem_str, supress=True):
     return wrapper
 
 def telemetry_in(indentifier, alt_fn, signal=None, wait=True):
+    """Allows the output of a function to be controlled from a host computer over serial, depending on the config file.
+
+    Arguments:
+        `identifier` (`str`): The identifier the host computer will use to refer to this function.
+        `alt_fn` (`function`): The function used to parse commands from the host computer and generate a simulated output.
+        `signal` (`function`): Generate a telemetry string to be output over serial when this function is called (optional).
+        `wait` (`float`): Wait a timeout (given in seconds) before giving a simulated output (to allow the host to respond with an instruction) (optional).
+    """
     def wrapper(fn):
         if INPUT_MODE == 0:
             return fn

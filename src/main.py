@@ -65,10 +65,10 @@ while True:
 
     servo.set_position(servo_horizontal_pos)
 
-    button.bind_interupt(begin, 1)
+    button.bind_interrupt(begin, 1)
     while STOP:
         sleep(0.3)
-    button.bind_interupt(stop, 1)
+    button.bind_interrupt(stop, 1)
 
     if MODE == 1:
         print("driving mode 1")
@@ -87,8 +87,8 @@ while True:
         def notify_junction(p=None):
             global detected_junction, enable_junction_detection
             detected_junction = enable_junction_detection
-        sensor1.bind_interupt(notify_junction, 1)
-        sensor4.bind_interupt(notify_junction, 1)
+        sensor1.bind_interrupt(notify_junction, 1)
+        sensor4.bind_interrupt(notify_junction, 1)
 
         # position on board
         location = "start"
